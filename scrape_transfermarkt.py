@@ -7,7 +7,8 @@ from collections import OrderedDict
 from config import Config
 from datetime import datetime
 from prefect import Flow, task, unmapped, flatten
-from utils import convert_market_value, convert_date, format_date
+from prefect.tasks.database import SQLiteScript
+from utils import convert_market_value, convert_date, format_date, format_height
 
 
 def get_table_soup(url):
@@ -24,49 +25,110 @@ def get_table_soup(url):
     return even_rows + odd_rows
 
 
-#@task(task_run_name="colect team urls", nout=1)
+@task(task_run_name="collect {league_url.split('/')[3]} team urls")
 def get_teams_urls(league_url):
 
     table_rows = get_table_soup(league_url)
+    team_urls = []
     for row in table_rows:
         # the replace there gives the url for detailed player info
-        team_urls.append(row.td.a["href"].replace("startseite", "kader"))
+        team_urls.append(
+            "".join([
+                Config.base_url,
+                row.td.a["href"].replace("startseite", "kader"),
+                Config.team_detailed_suffix_url,
+            ])
+        )
 
     return team_urls
 
 
+@task(task_run_name="collect {team_url.split('/')[3]} players")
 def get_players_data(team_url):
 
     table_rows = get_table_soup(team_url)
     players = []
     for row in table_rows:
         player_infos = [text for text in row.stripped_strings]
+        if len(player_infos) == 11:
+            player_infos.pop(3)
+        elif len(player_infos) == 12:
+            player_infos.pop(3)
+            player_infos.pop(3)
         player = OrderedDict([
             ("name", player_infos[1]),
+            ("team", team_url.split("/")[3]),
             ("role", player_infos[3]),
-            ("date_of_birth", format_date(re.search(r"[A-Z][a-z]{2} \d{1,}, \d{4}", player_infos[4]).group(0))),
+            ("date_of_birth", convert_date(re.search(r"[A-Z][a-z]{2} \d{1,}, \d{4}", player_infos[4]).group(0))),
             ("age", int(re.search(r"\(\d{2}\)", player_infos[4]).group(0)[1:-1])),
-            ("height", int(player_infos[5].replace(",", "")[:-2])),
+            ("height", format_height(player_infos[5])),
             ("foot", player_infos[6]),
             ("joined", format_date(player_infos[7])),
-            ("contract_expires", format_date(player_infos[8])),
+            ("contract_expires", convert_date(player_infos[8])),
             ("market_value", convert_market_value(player_infos[9])),
             ("nationality", row.find("img", {"class": "flaggenrahmen"})["title"]),
             ("nation_flag_url", row.find("img", {"class": "flaggenrahmen"})["src"]),
             ("player_picture_url", row.find("img", {"class": "bilderrahmen-fixed"})["src"]),
+            ("updated_on", datetime.today().strftime("%Y-%m-%d")),
+            ("season", int(team_url.split("/")[-3])),
         ])
         players.append(player)
 
+    pd.DataFrame(players).to_csv(
+        "csv_files/" + team_url.split("/")[3] + ".csv",
+        index=False,
+    )
+
     return players
+
+
+@task(task_run_name="Get Create Schema query")
+def get_db_schema(schema):
+    with open(schema) as f:
+        query = f.read()
+    return query
+
+
+# task classes
+create_db = SQLiteScript(
+    name="Create database",
+    db="football_players.sqlite",
+    tags=["db"],
+)
 
 
 def main():
     season = 2020
 
-    inda = Config.base_url + Config.serie_a_teams[0].replace("startseite", "kader") + Config.team_detailed_suffix_url
-    players = get_players_data(inda)
-    for player in players:
-        print(json.dumps(player, indent=4))
+    #for league in Config.league_urls:
+    #    league_url = Config.base_url + league + Config.season_suffix_url.format(season)
+    #    print(league_url.split("/"))
+    with Flow("scrape transfermarkt") as flow:
+        teams_urls = get_teams_urls.map(
+            [Config.base_url + league + Config.season_suffix_url.format(season)
+             for league in Config.league_urls],
+            #tags=["scrape"],
+        )
+        
+        players = get_players_data.map(
+            flatten(teams_urls),
+            #tags=["scrape"],
+        )
+
+        #db_schema = get_db_schema(
+        #    "db_schema.sql",
+        #    tags=["db"],
+        #)
+
+        #db = create_db(
+        #    script = db_schema
+        #)
+    flow.run()
+    #inda = Config.base_url + Config.serie_a_teams[0].replace("startseite", "kader") + Config.team_detailed_suffix_url
+    #print(inda.split("/"))
+    #players = get_players_data(inda)
+    #for player in players:
+    #    print(json.dumps(player, indent=4))
 
 
 if __name__ == "__main__":
