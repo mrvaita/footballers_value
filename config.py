@@ -12,3 +12,5 @@ class Config:
     season_suffix_url = "/plus/?saison_id={}"
 
     team_detailed_suffix_url = "/plus/1"
+
+    db_filename = "football_players.sqlite"

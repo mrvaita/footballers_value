@@ -8,7 +8,7 @@ from config import Config
 from datetime import datetime
 from prefect import Flow, task, unmapped, flatten
 from prefect.tasks.database import SQLiteScript
-from utils import convert_market_value, convert_date, format_date, format_height
+from utils import convert_market_value, convert_date, format_date, format_height, process_string
 
 
 def get_table_soup(url):
@@ -27,25 +27,35 @@ def get_table_soup(url):
 
 @task(task_run_name="collect {league_url.split('/')[3]} team urls")
 def get_teams_urls(league_url):
+    """Given a league url for transfermarkt, it returns urls for all the teams 
+    partecipating to that league in the specified season.
+
+    return:
+    tuple: (team_url: str, league_name: str)
+    """
 
     table_rows = get_table_soup(league_url)
     team_urls = []
     for row in table_rows:
         # the replace there gives the url for detailed player info
         team_urls.append(
-            "".join([
-                Config.base_url,
-                row.td.a["href"].replace("startseite", "kader"),
-                Config.team_detailed_suffix_url,
-            ])
+            (
+                "".join([
+                    Config.base_url,
+                    row.td.a["href"].replace("startseite", "kader"),
+                    Config.team_detailed_suffix_url,
+                ]),
+                league_url.split("/")[3]
+            )
         )
 
     return team_urls
 
 
 @task(task_run_name="collect {team_url.split('/')[3]} players")
-def get_players_data(team_url):
+def get_players_data(team_info):
 
+    team_url = team_info[0]
     table_rows = get_table_soup(team_url)
     players = []
     for row in table_rows:
@@ -56,17 +66,18 @@ def get_players_data(team_url):
             player_infos.pop(3)
             player_infos.pop(3)
         player = OrderedDict([
-            ("name", player_infos[1]),
-            ("team", team_url.split("/")[3]),
+            ("name", process_string(player_infos[1])),
+            ("team", process_string(team_url.split("/")[3])),
+            ("league", team_info[1]),
             ("role", player_infos[3]),
             ("date_of_birth", convert_date(re.search(r"[A-Z][a-z]{2} \d{1,}, \d{4}", player_infos[4]).group(0))),
             ("age", int(re.search(r"\(\d{2}\)", player_infos[4]).group(0)[1:-1])),
             ("height", format_height(player_infos[5])),
             ("foot", player_infos[6]),
-            ("joined", format_date(player_infos[7])),
+            ("joined", convert_date(player_infos[7])),
             ("contract_expires", convert_date(player_infos[8])),
             ("market_value", convert_market_value(player_infos[9])),
-            ("nationality", row.find("img", {"class": "flaggenrahmen"})["title"]),
+            ("nationality", process_string(row.find("img", {"class": "flaggenrahmen"})["title"])),
             ("nation_flag_url", row.find("img", {"class": "flaggenrahmen"})["src"]),
             ("player_picture_url", row.find("img", {"class": "bilderrahmen-fixed"})["src"]),
             ("updated_on", datetime.today().strftime("%Y-%m-%d")),
@@ -92,7 +103,27 @@ def get_db_schema(schema):
 # task classes
 create_db = SQLiteScript(
     name="Create database",
-    db="football_players.sqlite",
+    db=Config.db_filename,
+    tags=["db"],
+)
+
+
+@task(task_run_name="Create Insert data query")
+def create_insert_query(team_data):
+    table_columns = ", ".join(list(team_data[0].keys()))
+    insert_cmd = f"INSERT INTO players ({table_columns}) VALUES\n"
+    values = "),\n".join(
+        [", ".join(
+            ["(" + "'" + str(value) + "'" if list(row.values()).index(value) == 0 else "'" + str(value) + "'" for value in row.values()]
+        ) for row in team_data]
+    ) + ");"
+
+    return insert_cmd + values
+
+
+insert_team_players = SQLiteScript(
+	name="Insert Team",
+    db=Config.db_filename,
     tags=["db"],
 )
 
@@ -100,6 +131,8 @@ create_db = SQLiteScript(
 def main():
     season = 2020
 
+    team_players = pd.read_csv("csv_files/lazio-rom.csv").to_dict("records")
+    team_players = pd.read_csv("csv_files/inter-mailand.csv").to_dict("records")
     #for league in Config.league_urls:
     #    league_url = Config.base_url + league + Config.season_suffix_url.format(season)
     #    print(league_url.split("/"))
@@ -110,20 +143,28 @@ def main():
             #tags=["scrape"],
         )
         
-        players = get_players_data.map(
+        team_players = get_players_data.map(
             flatten(teams_urls),
             #tags=["scrape"],
         )
 
-        #db_schema = get_db_schema(
-        #    "db_schema.sql",
-        #    tags=["db"],
-        #)
+        db_schema = get_db_schema(
+            "db_schema.sql",
+        )
 
-        #db = create_db(
-        #    script = db_schema
-        #)
+        db = create_db(
+            script = db_schema,
+        )
+
+        queries = create_insert_query.map(team_players)
+
+        insert = insert_team_players.map(
+            script=queries,
+            upstream_tasks=[unmapped(db)],
+        )
+
     flow.run()
+    #flow.visualize()
     #inda = Config.base_url + Config.serie_a_teams[0].replace("startseite", "kader") + Config.team_detailed_suffix_url
     #print(inda.split("/"))
     #players = get_players_data(inda)
