@@ -11,8 +11,7 @@ def convert_market_value(value: str) -> float:
         else:
             return float(value[1:-3]) / 1000
     except ValueError:
-        #return None
-        return "NULL"
+        return None
 
 def convert_date(date_str: str) -> datetime:
     """Convert a string date from of `Jan 01 2021` format into `2021-01-01`.
@@ -20,8 +19,7 @@ def convert_date(date_str: str) -> datetime:
     try:
         date = datetime.strptime(date_str, "%b %d, %Y")
     except ValueError:
-        #return None
-        return "NULL"
+        return None
     return date.strftime("%Y-%m-%d")
 
 
@@ -38,15 +36,15 @@ def format_height(height: str) -> int:
     try:
         return int(height.replace(",", "")[:-2])
     except ValueError:
-        #return None
-        return "NULL"
+        return None
 
 
-def process_string(s: str) -> str:
-    """Takes a string and checks whether is contains `'`. If yes, it replaces
-    it with `''` to avoid database insertion errors.
+def sql_quote(value):
+    """Naive SQL quoting.
+    All values except NULL are returned as SQL strings in single quotes,
+    with any embedded quotes doubled.
     """
-    if "'" in s:
-        return s.replace("'", "''")
-    else:
-        return s
+    if value is None:
+         return 'NULL'
+
+    return "'{}'".format(str(value).replace("'", "''"))

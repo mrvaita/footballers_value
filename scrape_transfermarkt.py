@@ -8,7 +8,7 @@ from config import Config
 from datetime import datetime
 from prefect import Flow, task, unmapped, flatten
 from prefect.tasks.database import SQLiteScript
-from utils import convert_market_value, convert_date, format_date, format_height, process_string
+from utils import convert_market_value, convert_date, format_height, sql_quote
 
 
 def get_table_soup(url):
@@ -66,8 +66,8 @@ def get_players_data(team_info):
             player_infos.pop(3)
             player_infos.pop(3)
         player = OrderedDict([
-            ("name", process_string(player_infos[1])),
-            ("team", process_string(team_url.split("/")[3])),
+            ("name", player_infos[1]),
+            ("team", team_url.split("/")[3]),
             ("league", team_info[1]),
             ("role", player_infos[3]),
             ("date_of_birth", convert_date(re.search(r"[A-Z][a-z]{2} \d{1,}, \d{4}", player_infos[4]).group(0))),
@@ -77,7 +77,7 @@ def get_players_data(team_info):
             ("joined", convert_date(player_infos[7])),
             ("contract_expires", convert_date(player_infos[8])),
             ("market_value", convert_market_value(player_infos[9])),
-            ("nationality", process_string(row.find("img", {"class": "flaggenrahmen"})["title"])),
+            ("nationality", row.find("img", {"class": "flaggenrahmen"})["title"]),
             ("nation_flag_url", row.find("img", {"class": "flaggenrahmen"})["src"]),
             ("player_picture_url", row.find("img", {"class": "bilderrahmen-fixed"})["src"]),
             ("updated_on", datetime.today().strftime("%Y-%m-%d")),
@@ -114,7 +114,12 @@ def create_insert_query(team_data):
     insert_cmd = f"INSERT INTO players ({table_columns}) VALUES\n"
     values = "),\n".join(
         [", ".join(
-            ["(" + "'" + str(value) + "'" if list(row.values()).index(value) == 0 else "'" + str(value) + "'" for value in row.values()]
+            [
+                "(" + sql_quote(value)
+                    if list(row.values()).index(value) == 0
+                    else sql_quote(value)
+                    for value in row.values()
+            ]
         ) for row in team_data]
     ) + ");"
 
@@ -131,21 +136,14 @@ insert_team_players = SQLiteScript(
 def main():
     season = 2020
 
-    team_players = pd.read_csv("csv_files/lazio-rom.csv").to_dict("records")
-    team_players = pd.read_csv("csv_files/inter-mailand.csv").to_dict("records")
-    #for league in Config.league_urls:
-    #    league_url = Config.base_url + league + Config.season_suffix_url.format(season)
-    #    print(league_url.split("/"))
     with Flow("scrape transfermarkt") as flow:
         teams_urls = get_teams_urls.map(
             [Config.base_url + league + Config.season_suffix_url.format(season)
              for league in Config.league_urls],
-            #tags=["scrape"],
         )
         
         team_players = get_players_data.map(
             flatten(teams_urls),
-            #tags=["scrape"],
         )
 
         db_schema = get_db_schema(
@@ -164,14 +162,7 @@ def main():
         )
 
     flow.run()
-    #flow.visualize()
-    #inda = Config.base_url + Config.serie_a_teams[0].replace("startseite", "kader") + Config.team_detailed_suffix_url
-    #print(inda.split("/"))
-    #players = get_players_data(inda)
-    #for player in players:
-    #    print(json.dumps(player, indent=4))
 
 
 if __name__ == "__main__":
     main()
-
