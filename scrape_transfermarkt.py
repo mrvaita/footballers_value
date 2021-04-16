@@ -1,6 +1,7 @@
 import requests
 import pandas as pd
 import re
+import sys
 import json
 from bs4 import BeautifulSoup
 from collections import OrderedDict
@@ -8,7 +9,14 @@ from config import Config
 from datetime import datetime
 from prefect import Flow, task, unmapped, flatten
 from prefect.tasks.database import SQLiteScript
-from utils import convert_market_value, convert_date, format_height, sql_quote
+from utils import (
+    convert_market_value,
+    convert_date,
+    format_height,
+    sql_quote,
+    extract_date,
+    extract_age,
+)
 
 
 def get_table_soup(url):
@@ -69,9 +77,9 @@ def get_players_data(team_info):
             ("name", player_infos[1]),
             ("team", team_url.split("/")[3]),
             ("league", team_info[1]),
-            ("role", player_infos[3]),
-            ("date_of_birth", convert_date(re.search(r"[A-Z][a-z]{2} \d{1,}, \d{4}", player_infos[4]).group(0))),
-            ("age", int(re.search(r"\(\d{2}\)", player_infos[4]).group(0)[1:-1])),
+            ("role", player_infos[3] if player_infos[3] != "N/A" else None),
+            ("date_of_birth", extract_date(player_infos[4])),
+            ("age", extract_age(player_infos[4])),
             ("height", format_height(player_infos[5])),
             ("foot", player_infos[6]),
             ("joined", convert_date(player_infos[7])),
@@ -85,10 +93,10 @@ def get_players_data(team_info):
         ])
         players.append(player)
 
-    pd.DataFrame(players).to_csv(
-        "csv_files/" + team_url.split("/")[3] + ".csv",
-        index=False,
-    )
+    #pd.DataFrame(players).to_csv(
+    #    "csv_files/" + team_url.split("/")[3] + ".csv",
+    #    index=False,
+    #)
 
     return players
 
@@ -133,17 +141,15 @@ insert_team_players = SQLiteScript(
 )
 
 
-def main():
-    season = 2020
-
+def scrape_transfermarkt(league_urls):
+    """Given a list of league urls, collects and adds fooltball players data to
+    an sqlite database.
+    """
     with Flow("scrape transfermarkt") as flow:
-        teams_urls = get_teams_urls.map(
-            [Config.base_url + league + Config.season_suffix_url.format(season)
-             for league in Config.league_urls],
-        )
+        team_urls = get_teams_urls.map(league_urls)
         
         team_players = get_players_data.map(
-            flatten(teams_urls),
+            flatten(team_urls),
         )
 
         db_schema = get_db_schema(
@@ -164,5 +170,44 @@ def main():
     flow.run()
 
 
+def main(behaviour):
+    """Add football players data to the database.
+
+    Parameters:
+    behaviour (str): Use the values `update` to add the most recent season data
+        to the database. Use the `populate` value to populate the database with
+        data from 1970 to the season before the actual one.
+    """
+    now = datetime.now()
+
+    if behaviour == "update":
+        season = now.year - 1  # e.g. season 2020/21 is 2020
+
+        league_urls = [
+            Config.base_url + league + Config.season_suffix_url.format(season)
+            for league in Config.league_urls
+        ]
+
+    elif behaviour == "populate":
+        seasons = range(1970, now.year - 1, 1)
+
+        league_urls = [
+            Config.base_url + league + Config.season_suffix_url.format(season)
+            for league in Config.league_urls
+            for season in seasons
+        ]
+
+    else:
+        raise ValueError(
+            "Please use either `update` or `populate` argument.")
+
+    scrape_transfermarkt(league_urls)
+
+
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) == 1:
+        raise ValueError(
+            "Please use either `update` or `populate` argument.")
+    else:
+        behaviour = sys.argv[1]
+        main(behaviour)
