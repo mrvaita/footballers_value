@@ -3,6 +3,7 @@ import pandas as pd
 import re
 import sys
 import json
+import logging
 from bs4 import BeautifulSoup
 from collections import OrderedDict
 from config import Config
@@ -16,7 +17,12 @@ from utils import (
     sql_quote,
     extract_date,
     extract_age,
+    extract_nationality,
+    extract_nation_flag_url,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 def get_table_soup(url):
@@ -33,6 +39,22 @@ def get_table_soup(url):
     return even_rows + odd_rows
 
 
+def get_season_urls(season):
+
+    if season < Config.populate_db_params["start_premier_league"]:
+        league_base_strings = Config.league_base_strings[1:]
+    else:
+        league_base_strings = Config.league_base_strings
+
+    league_urls = [
+        Config.base_url + league + Config.season_suffix_url.format(season)
+        for league in league_base_strings
+    ]
+
+    return league_urls
+
+
+
 @task(task_run_name="collect {league_url.split('/')[3]} team urls")
 def get_teams_urls(league_url):
     """Given a league url for transfermarkt, it returns urls for all the teams 
@@ -45,7 +67,7 @@ def get_teams_urls(league_url):
     table_rows = get_table_soup(league_url)
     team_urls = []
     for row in table_rows:
-        # the replace there gives the url for detailed player info
+        # the replace gives the url for detailed player info
         team_urls.append(
             (
                 "".join([
@@ -67,31 +89,38 @@ def get_players_data(team_info):
     table_rows = get_table_soup(team_url)
     players = []
     for row in table_rows:
-        player_infos = [text for text in row.stripped_strings]
-        if len(player_infos) == 11:
-            player_infos.pop(3)
-        elif len(player_infos) == 12:
-            player_infos.pop(3)
-            player_infos.pop(3)
-        player = OrderedDict([
-            ("name", player_infos[1]),
-            ("team", team_url.split("/")[3]),
-            ("league", team_info[1]),
-            ("role", player_infos[3] if player_infos[3] != "N/A" else None),
-            ("date_of_birth", extract_date(player_infos[4])),
-            ("age", extract_age(player_infos[4])),
-            ("height", format_height(player_infos[5])),
-            ("foot", player_infos[6]),
-            ("joined", convert_date(player_infos[7])),
-            ("contract_expires", convert_date(player_infos[8])),
-            ("market_value", convert_market_value(player_infos[9])),
-            ("nationality", row.find("img", {"class": "flaggenrahmen"})["title"]),
-            ("nation_flag_url", row.find("img", {"class": "flaggenrahmen"})["src"]),
-            ("player_picture_url", row.find("img", {"class": "bilderrahmen-fixed"})["src"]),
-            ("updated_on", datetime.today().strftime("%Y-%m-%d")),
-            ("season", int(team_url.split("/")[-3])),
-        ])
-        players.append(player)
+        player_info = [text for text in row.stripped_strings]
+        #print(player_info, team_url.split("/")[3])
+        #print(team_url.split("/")[3], team_url.split("/")[-3])
+        if len(player_info) == 11:
+            player_info.pop(3)
+        elif len(player_info) == 12:
+            player_info.pop(3)
+            player_info.pop(3)
+        try:
+            player = OrderedDict([
+                ("name", player_info[1]),
+                ("team", team_url.split("/")[3]),
+                ("league", team_info[1]),
+                ("role", player_info[3] if player_info[3] != "N/A" else None),
+                ("date_of_birth", extract_date(player_info[4])),
+                ("age", extract_age(player_info[4])),
+                ("height", format_height(player_info[5])),
+                ("foot", player_info[6] if player_info[6] != "N/A" else None),
+                ("joined", convert_date(player_info[7])),
+                ("contract_expires", convert_date(player_info[8])),
+                ("market_value", convert_market_value(player_info[9])),
+                ("nationality", extract_nationality(row)),
+                ("nation_flag_url", extract_nation_flag_url(row)),
+                ("player_picture_url", row.find("img", {"class": "bilderrahmen-fixed"})["src"]),
+                ("updated_on", datetime.today().strftime("%Y-%m-%d")),
+                ("season", int(team_url.split("/")[-3])),
+            ])
+            players.append(player)
+        except IndexError:
+            team = team_url.split("/")[3]
+            season = team_url.split("/")[-3]
+            logger.error(f"Error encountered for {player_info} in team {team}, season {season}")
 
     #pd.DataFrame(players).to_csv(
     #    "csv_files/" + team_url.split("/")[3] + ".csv",
@@ -118,20 +147,23 @@ create_db = SQLiteScript(
 
 @task(task_run_name="Create Insert data query")
 def create_insert_query(team_data):
-    table_columns = ", ".join(list(team_data[0].keys()))
-    insert_cmd = f"INSERT INTO players ({table_columns}) VALUES\n"
-    values = "),\n".join(
-        [", ".join(
-            [
-                "(" + sql_quote(value)
-                    if list(row.values()).index(value) == 0
-                    else sql_quote(value)
-                    for value in row.values()
-            ]
-        ) for row in team_data]
-    ) + ");"
+    if len(team_data) == 0:
+        return "--"
+    else:
+        table_columns = ", ".join(list(team_data[0].keys()))
+        insert_cmd = f"INSERT INTO players ({table_columns}) VALUES\n"
+        values = "),\n".join(
+            [", ".join(
+                [
+                    "(" + sql_quote(value)
+                        if list(row.values()).index(value) == 0
+                        else sql_quote(value)
+                        for value in row.values()
+                ]
+            ) for row in team_data]
+        ) + ");"
 
-    return insert_cmd + values
+        return insert_cmd + values
 
 
 insert_team_players = SQLiteScript(
@@ -145,7 +177,7 @@ def scrape_transfermarkt(league_urls):
     """Given a list of league urls, collects and adds fooltball players data to
     an sqlite database.
     """
-    with Flow("scrape transfermarkt") as flow:
+    with Flow("scrape transfermarkt season") as flow:
         team_urls = get_teams_urls.map(league_urls)
         
         team_players = get_players_data.map(
@@ -153,7 +185,7 @@ def scrape_transfermarkt(league_urls):
         )
 
         db_schema = get_db_schema(
-            "db_schema.sql",
+            Config.db_schema,
         )
 
         db = create_db(
@@ -167,47 +199,18 @@ def scrape_transfermarkt(league_urls):
             upstream_tasks=[unmapped(db)],
         )
 
+    return flow
+
+
+def main():
+    now = datetime.now()
+
+    season = now.year - 1  # e.g. season 2020/21 is 2020
+
+    league_urls = get_season_urls(season)
+    flow = scrape_transfermarkt(league_urls)
     flow.run()
 
 
-def main(behaviour):
-    """Add football players data to the database.
-
-    Parameters:
-    behaviour (str): Use the values `update` to add the most recent season data
-        to the database. Use the `populate` value to populate the database with
-        data from 1970 to the season before the actual one.
-    """
-    now = datetime.now()
-
-    if behaviour == "update":
-        season = now.year - 1  # e.g. season 2020/21 is 2020
-
-        league_urls = [
-            Config.base_url + league + Config.season_suffix_url.format(season)
-            for league in Config.league_urls
-        ]
-
-    elif behaviour == "populate":
-        seasons = range(1970, now.year - 1, 1)
-
-        league_urls = [
-            Config.base_url + league + Config.season_suffix_url.format(season)
-            for league in Config.league_urls
-            for season in seasons
-        ]
-
-    else:
-        raise ValueError(
-            "Please use either `update` or `populate` argument.")
-
-    scrape_transfermarkt(league_urls)
-
-
 if __name__ == "__main__":
-    if len(sys.argv) == 1:
-        raise ValueError(
-            "Please use either `update` or `populate` argument.")
-    else:
-        behaviour = sys.argv[1]
-        main(behaviour)
+    main()

@@ -36,6 +36,26 @@ def extract_age(date_age_str: str) -> str:
         return None
 
 
+def extract_nationality(soup) -> str:
+    """Given an instance of beautifulsoup extract the player nationality and
+    and returns it as string.
+    """
+    try:
+        return soup.find("img", {"class": "flaggenrahmen"})["title"]
+    except TypeError:
+        return None
+
+
+def extract_nation_flag_url(soup) -> str:
+    """Given an instance of beautifulsoup extract the nation flag url and
+    and returns it as string.
+    """
+    try:
+        return soup.find("img", {"class": "flaggenrahmen"})["title"]
+    except TypeError:
+        return None
+
+
 def convert_date(date_str: str) -> datetime:
     """Convert a string date from of `Jan 01 2021` format into `2021-01-01`.
     """
