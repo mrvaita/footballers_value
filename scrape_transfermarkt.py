@@ -9,6 +9,7 @@ from collections import OrderedDict
 from config import Config
 from datetime import datetime
 from prefect import Flow, task, unmapped, flatten
+from prefect.run_configs import LocalRun
 from prefect.tasks.database import SQLiteScript
 from utils import (
     convert_market_value,
@@ -55,7 +56,7 @@ def get_season_urls(season):
 
 
 
-@task(task_run_name="collect {league_url.split('/')[3]} team urls")
+@task(task_run_name="collect {league_url} team urls")
 def get_teams_urls(league_url):
     """Given a league url for transfermarkt, it returns urls for all the teams 
     partecipating to that league in the specified season.
@@ -82,7 +83,7 @@ def get_teams_urls(league_url):
     return team_urls
 
 
-@task(task_run_name="collect {team_url.split('/')[3]} players")
+@task(task_run_name="collect {team_info} players")
 def get_players_data(team_info):
 
     team_url = team_info[0]
@@ -90,8 +91,6 @@ def get_players_data(team_info):
     players = []
     for row in table_rows:
         player_info = [text for text in row.stripped_strings]
-        #print(player_info, team_url.split("/")[3])
-        #print(team_url.split("/")[3], team_url.split("/")[-3])
         if len(player_info) == 11:
             player_info.pop(3)
         elif len(player_info) == 12:
@@ -121,11 +120,6 @@ def get_players_data(team_info):
             team = team_url.split("/")[3]
             season = team_url.split("/")[-3]
             logger.error(f"Error encountered for {player_info} in team {team}, season {season}")
-
-    #pd.DataFrame(players).to_csv(
-    #    "csv_files/" + team_url.split("/")[3] + ".csv",
-    #    index=False,
-    #)
 
     return players
 
@@ -177,7 +171,7 @@ def scrape_transfermarkt(league_urls):
     """Given a list of league urls, collects and adds fooltball players data to
     an sqlite database.
     """
-    with Flow("scrape transfermarkt season") as flow:
+    with Flow("scrape transfermarkt season", run_config=LocalRun()) as flow:
         team_urls = get_teams_urls.map(league_urls)
         
         team_players = get_players_data.map(
@@ -209,7 +203,8 @@ def main():
 
     league_urls = get_season_urls(season)
     flow = scrape_transfermarkt(league_urls)
-    flow.run()
+    #flow.run()  # for testing
+    flow.register("transfermarkt")
 
 
 if __name__ == "__main__":

@@ -1,6 +1,7 @@
 from datetime import datetime
 from prefect import Flow, task
 from scrape_transfermarkt import scrape_transfermarkt, get_season_urls
+from prefect.run_configs import LocalRun
 
 
 @task(task_run_name="get season urls")
@@ -15,7 +16,7 @@ def populate_season(league_urls):
     flow.run()
 
 
-with Flow("scrape seasons") as flow:
+with Flow("scrape seasons", run_config=LocalRun()) as flow:
     seasons = range(1970, datetime.now().year - 1, 1)
     seasons = range(1986, 1987, 1)
 
