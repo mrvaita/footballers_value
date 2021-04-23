@@ -51,7 +51,7 @@ def extract_nation_flag_url(soup) -> str:
     and returns it as string.
     """
     try:
-        return soup.find("img", {"class": "flaggenrahmen"})["url"]
+        return soup.find("img", {"class": "flaggenrahmen"})["src"]
     except TypeError:
         return None
 
@@ -77,7 +77,7 @@ def format_height(height: str) -> int:
     """Takes a string in the format `1,56 m` and returns the integer 156.
     """
     try:
-        height_cm = int(height.replace(",", "")[:-2])
+        height_cm = height.replace(",", "")[:-2]
         if len(height_cm) == 2:
             # there are few cases where instead of 1,80 I found 1,8.
             return int(height_cm + "0")
