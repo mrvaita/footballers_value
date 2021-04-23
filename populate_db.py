@@ -10,19 +10,19 @@ def get_competition_urls(season):
 
 
 @task(task_run_name="scrape season: {season}")
-def populate_season(league_urls):
-    flow = scrape_transfermarkt(league_urls)
+def populate_season(league_urls, season):
+    flow = scrape_transfermarkt(league_urls, season)
 
     flow.run()
 
 
 with Flow("scrape seasons", run_config=LocalRun()) as flow:
     seasons = range(1970, datetime.now().year - 1, 1)
-    seasons = range(1986, 1987, 1)
+    seasons = range(1972, 1973, 1)
 
     leagues_urls = get_competition_urls.map(seasons)
     
-    results = populate_season.map(leagues_urls)
+    results = populate_season.map(leagues_urls, seasons)
 
 
 if __name__ == "__main__":
