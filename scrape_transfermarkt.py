@@ -28,14 +28,17 @@ logger = logging.getLogger(__name__)
 
 def get_table_soup(url):
 
-    r = requests.get(url, headers={'User-Agent': 'Custom'})
-    if r.status_code != 200:
-        raise Exception("Page not found")
+    try:
+        r = requests.get(url, headers={'User-Agent': 'Custom'})
+        if r.status_code != 200:
+            raise Exception("Page not found")
 
-    soup = BeautifulSoup(r.text, "html.parser")
-    table = soup.find("div", {"class": "responsive-table"})
-    even_rows = table.find_all("tr", {"class": "even"})
-    odd_rows = table.find_all("tr", {"class": "odd"})
+        soup = BeautifulSoup(r.text, "html.parser")
+        table = soup.find("div", {"class": "responsive-table"})
+        even_rows = table.find_all("tr", {"class": "even"})
+        odd_rows = table.find_all("tr", {"class": "odd"})
+    except requests.exceptions.ConnectionError as e:
+        logger.error(f"Error {e} encountered for url {url}")
 
     return even_rows + odd_rows
 
