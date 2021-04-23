@@ -77,7 +77,12 @@ def format_height(height: str) -> int:
     """Takes a string in the format `1,56 m` and returns the integer 156.
     """
     try:
-        return int(height.replace(",", "")[:-2])
+        height_cm = int(height.replace(",", "")[:-2])
+        if len(height_cm) == 2:
+            # there are few cases where instead of 1,80 I found 1,8.
+            return int(height_cm + "0")
+        else:
+            return int(height_cm)
     except ValueError:
         return None
 
