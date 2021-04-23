@@ -51,7 +51,7 @@ def extract_nation_flag_url(soup) -> str:
     and returns it as string.
     """
     try:
-        return soup.find("img", {"class": "flaggenrahmen"})["title"]
+        return soup.find("img", {"class": "flaggenrahmen"})["url"]
     except TypeError:
         return None
 
