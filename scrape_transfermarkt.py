@@ -4,6 +4,7 @@ import re
 import sys
 import json
 import logging
+import great_expectations as ge
 from bs4 import BeautifulSoup
 from collections import OrderedDict
 from config import Config
@@ -128,10 +129,10 @@ def get_players_data(team_info):
 
 
 @task(task_run_name="Get Create Schema query")
-def get_db_schema(schema):
+def get_db_schema(schema, season):
     with open(schema) as f:
         query = f.read()
-    return query
+    return query.format(season=season)
 
 
 # task classes
@@ -142,13 +143,13 @@ create_db = SQLiteScript(
 )
 
 
-@task(task_run_name="Create Insert data query")
-def create_insert_query(team_data):
+@task(task_run_name="Create Insert data query for season {season}")
+def create_insert_query(team_data, season):
     if len(team_data) == 0:
         return "--"
     else:
         table_columns = ", ".join(list(team_data[0].keys()))
-        insert_cmd = f"INSERT INTO players ({table_columns}) VALUES\n"
+        insert_cmd = f"INSERT INTO players_{season}_staging ({table_columns}) VALUES\n"
         values = "),\n".join(
             [", ".join(
                 [
@@ -170,7 +171,35 @@ insert_team_players = SQLiteScript(
 )
 
 
-def scrape_transfermarkt(league_urls):
+#@task(task_run_name="validate season {season} data")
+def validate_data(season):
+    context = ge.data_context.DataContext()
+
+    # Configuring data batch to validate
+    datasource_name = "football_players"
+    batch_kwargs = {
+        'table': f"players_{season}_staging",
+        'datasource': datasource_name,
+    }
+
+	# Configuring a Checkpoint to validate the batch
+    my_checkpoint = ge.checkpoint.LegacyCheckpoint(
+        name="my_checkpoint",
+        data_context=context,
+        batches=[{
+            "batch_kwargs": batch_kwargs,
+            "expectation_suite_names": ["players"],
+        }]
+    )
+
+    # Run validation!
+    results = my_checkpoint.run()
+
+    print(results["success"])
+
+
+
+def scrape_transfermarkt(league_urls, season):
     """Given a list of league urls, collects and adds fooltball players data to
     an sqlite database.
     """
@@ -183,13 +212,14 @@ def scrape_transfermarkt(league_urls):
 
         db_schema = get_db_schema(
             Config.db_schema,
+            season,
         )
 
         db = create_db(
             script = db_schema,
         )
 
-        queries = create_insert_query.map(team_players)
+        queries = create_insert_query.map(team_players, unmapped(season))
 
         insert = insert_team_players.map(
             script=queries,
@@ -205,10 +235,11 @@ def main():
     season = now.year - 1  # e.g. season 2020/21 is 2020
 
     league_urls = get_season_urls(season)
-    flow = scrape_transfermarkt(league_urls)
+    flow = scrape_transfermarkt(league_urls, season)
     #flow.run()  # for testing
     flow.register("transfermarkt")
 
 
 if __name__ == "__main__":
-    main()
+    #main()
+    validate_data(1972)
