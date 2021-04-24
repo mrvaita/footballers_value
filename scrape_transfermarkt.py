@@ -4,11 +4,14 @@ import re
 import sys
 import json
 import logging
+import great_expectations as ge
 from bs4 import BeautifulSoup
 from collections import OrderedDict
 from config import Config
 from datetime import datetime
 from prefect import Flow, task, unmapped, flatten
+from prefect.engine import signals
+from prefect.run_configs import LocalRun
 from prefect.tasks.database import SQLiteScript
 from utils import (
     convert_market_value,
@@ -27,14 +30,17 @@ logger = logging.getLogger(__name__)
 
 def get_table_soup(url):
 
-    r = requests.get(url, headers={'User-Agent': 'Custom'})
-    if r.status_code != 200:
-        raise Exception("Page not found")
+    try:
+        r = requests.get(url, headers={'User-Agent': 'Custom'})
+        if r.status_code != 200:
+            raise Exception("Page not found")
 
-    soup = BeautifulSoup(r.text, "html.parser")
-    table = soup.find("div", {"class": "responsive-table"})
-    even_rows = table.find_all("tr", {"class": "even"})
-    odd_rows = table.find_all("tr", {"class": "odd"})
+        soup = BeautifulSoup(r.text, "html.parser")
+        table = soup.find("div", {"class": "responsive-table"})
+        even_rows = table.find_all("tr", {"class": "even"})
+        odd_rows = table.find_all("tr", {"class": "odd"})
+    except requests.exceptions.ConnectionError as e:
+        logger.error(f"Error {e} encountered for url {url}")
 
     return even_rows + odd_rows
 
@@ -54,8 +60,7 @@ def get_season_urls(season):
     return league_urls
 
 
-
-@task(task_run_name="collect {league_url.split('/')[3]} team urls")
+@task(task_run_name="collect {league_url} team urls")
 def get_teams_urls(league_url):
     """Given a league url for transfermarkt, it returns urls for all the teams 
     partecipating to that league in the specified season.
@@ -82,7 +87,7 @@ def get_teams_urls(league_url):
     return team_urls
 
 
-@task(task_run_name="collect {team_url.split('/')[3]} players")
+@task(task_run_name="collect {team_info} players")
 def get_players_data(team_info):
 
     team_url = team_info[0]
@@ -90,8 +95,6 @@ def get_players_data(team_info):
     players = []
     for row in table_rows:
         player_info = [text for text in row.stripped_strings]
-        #print(player_info, team_url.split("/")[3])
-        #print(team_url.split("/")[3], team_url.split("/")[-3])
         if len(player_info) == 11:
             player_info.pop(3)
         elif len(player_info) == 12:
@@ -122,19 +125,14 @@ def get_players_data(team_info):
             season = team_url.split("/")[-3]
             logger.error(f"Error encountered for {player_info} in team {team}, season {season}")
 
-    #pd.DataFrame(players).to_csv(
-    #    "csv_files/" + team_url.split("/")[3] + ".csv",
-    #    index=False,
-    #)
-
     return players
 
 
 @task(task_run_name="Get Create Schema query")
-def get_db_schema(schema):
+def get_db_schema(schema, season):
     with open(schema) as f:
         query = f.read()
-    return query
+    return query.format(season=season)
 
 
 # task classes
@@ -145,13 +143,13 @@ create_db = SQLiteScript(
 )
 
 
-@task(task_run_name="Create Insert data query")
-def create_insert_query(team_data):
+@task(task_run_name="Create Insert data query for season {season}")
+def create_insert_query(team_data, season):
     if len(team_data) == 0:
         return "--"
     else:
         table_columns = ", ".join(list(team_data[0].keys()))
-        insert_cmd = f"INSERT INTO players ({table_columns}) VALUES\n"
+        insert_cmd = f"INSERT INTO players_{season}_staging ({table_columns}) VALUES\n"
         values = "),\n".join(
             [", ".join(
                 [
@@ -173,11 +171,43 @@ insert_team_players = SQLiteScript(
 )
 
 
-def scrape_transfermarkt(league_urls):
+@task(task_run_name="validate season {season} data")
+def validate_data(season):
+    context = ge.data_context.DataContext()
+
+    # Configuring data batch to validate
+    datasource_name = "football_players"
+    batch_kwargs = {
+        'table': f"players_{season}_staging",
+        'datasource': datasource_name,
+    }
+
+	# Configuring a Checkpoint to validate the batch
+    my_checkpoint = ge.checkpoint.LegacyCheckpoint(
+        name="my_checkpoint",
+        data_context=context,
+        batches=[{
+            "batch_kwargs": batch_kwargs,
+            "expectation_suite_names": ["players"],
+        }]
+    )
+
+    # Run validation!
+    results = my_checkpoint.run()
+
+    print(results["success"])
+
+    if not results["success"]:
+        raise signals.FAIL()
+    else:
+        return results["success"]
+
+
+def scrape_transfermarkt(league_urls, season):
     """Given a list of league urls, collects and adds fooltball players data to
     an sqlite database.
     """
-    with Flow("scrape transfermarkt season") as flow:
+    with Flow("scrape transfermarkt season", run_config=LocalRun()) as flow:
         team_urls = get_teams_urls.map(league_urls)
         
         team_players = get_players_data.map(
@@ -186,17 +216,23 @@ def scrape_transfermarkt(league_urls):
 
         db_schema = get_db_schema(
             Config.db_schema,
+            season,
         )
 
         db = create_db(
             script = db_schema,
         )
 
-        queries = create_insert_query.map(team_players)
+        queries = create_insert_query.map(team_players, unmapped(season))
 
-        insert = insert_team_players.map(
+        staging = insert_team_players.map(
             script=queries,
             upstream_tasks=[unmapped(db)],
+        )
+
+        validate = validate_data(
+            season,
+            upstream_tasks=[staging],
         )
 
     return flow
@@ -206,11 +242,15 @@ def main():
     now = datetime.now()
 
     season = now.year - 1  # e.g. season 2020/21 is 2020
+    season = 2011
 
     league_urls = get_season_urls(season)
-    flow = scrape_transfermarkt(league_urls)
-    flow.run()
+    flow = scrape_transfermarkt(league_urls, season)
+    flow.run()  # for testing
+    #flow.register("transfermarkt")
+    #flow.visualize()
 
 
 if __name__ == "__main__":
     main()
+    #validate_data(1972)

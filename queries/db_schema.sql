@@ -28,3 +28,23 @@ ON players(team);
 
 CREATE INDEX IF NOT EXISTS i_nationality
 ON players(nationality);
+
+DROP TABLE IF EXISTS players_{season}_staging;
+CREATE TABLE IF NOT EXISTS players_{season}_staging (
+    name TEXT,
+    team TEXT,
+    league TEXT,
+    role TEXT,
+    date_of_birth DATE,
+    age INT,
+    height INT,
+    foot TEXT,
+    joined DATE,
+    contract_expires DATE,
+    market_value FLOAT,
+    nationality TEXT,
+    nation_flag_url TEXT,
+    player_picture_url TEXT,
+    updated_on DATE,
+    season INT
+);

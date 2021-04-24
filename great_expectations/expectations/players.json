@@ -1,0 +1,561 @@
+{
+  "data_asset_type": "Dataset",
+  "expectation_suite_name": "players",
+  "expectations": [
+    {
+      "expectation_type": "expect_table_columns_to_match_ordered_list",
+      "kwargs": {
+        "column_list": [
+          "name",
+          "team",
+          "league",
+          "role",
+          "date_of_birth",
+          "age",
+          "height",
+          "foot",
+          "joined",
+          "contract_expires",
+          "market_value",
+          "nationality",
+          "nation_flag_url",
+          "player_picture_url",
+          "updated_on",
+          "season"
+        ]
+      },
+      "meta": {}
+    },
+    {
+      "expectation_type": "expect_table_row_count_to_be_between",
+      "kwargs": {
+        "max_value": 4000,
+        "min_value": 1000
+      },
+      "meta": {}
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "name"
+      },
+      "meta": {}
+    },
+    {
+      "expectation_type": "expect_column_proportion_of_unique_values_to_be_between",
+      "kwargs": {
+        "column": "name",
+        "max_value": 1.0,
+        "min_value": 0.9
+      },
+      "meta": {}
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_in_type_list",
+      "kwargs": {
+        "column": "name",
+        "type_list": [
+          "CHAR",
+          "VARCHAR",
+          "NVARCHAR",
+          "TEXT",
+          "STRING",
+          "StringType",
+          "string",
+          "str"
+        ]
+      },
+      "meta": {}
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "team"
+      },
+      "meta": {}
+    },
+    {
+      "expectation_type": "expect_column_proportion_of_unique_values_to_be_between",
+      "kwargs": {
+        "column": "team",
+        "max_value": 0.06,
+        "min_value": 0.02
+      },
+      "meta": {}
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_in_type_list",
+      "kwargs": {
+        "column": "team",
+        "type_list": [
+          "CHAR",
+          "VARCHAR",
+          "NVARCHAR",
+          "TEXT",
+          "STRING",
+          "StringType",
+          "string",
+          "str"
+        ]
+      },
+      "meta": {}
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_in_set",
+      "kwargs": {
+        "column": "league",
+        "value_set": [
+          "premier-league",
+          "1-bundesliga",
+          "ligue-1",
+          "primera-division",
+          "serie-a"
+        ]
+      },
+      "meta": {}
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "league"
+      },
+      "meta": {}
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_in_type_list",
+      "kwargs": {
+        "column": "league",
+        "type_list": [
+          "CHAR",
+          "VARCHAR",
+          "NVARCHAR",
+          "TEXT",
+          "STRING",
+          "StringType",
+          "string",
+          "str"
+        ]
+      },
+      "meta": {}
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_in_set",
+      "kwargs": {
+        "column": "role",
+        "value_set": [
+          "Attacking Midfield",
+          "Central Midfield",
+          "Centre-Back",
+          "Centre-Forward",
+          "Defender",
+          "Defensive Midfield",
+          "Goalkeeper",
+          "Left Midfield",
+          "Left Winger",
+          "Left-Back",
+          "Right Midfield",
+          "Right Winger",
+          "Right-Back",
+          "Second Striker",
+          "Sweeper",
+          "attack",
+          "midfield"
+        ]
+      },
+      "meta": {}
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_in_type_list",
+      "kwargs": {
+        "column": "role",
+        "type_list": [
+          "CHAR",
+          "VARCHAR",
+          "NVARCHAR",
+          "TEXT",
+          "STRING",
+          "StringType",
+          "string",
+          "str"
+        ]
+      },
+      "meta": {}
+    },
+    {
+      "expectation_type": "expect_column_proportion_of_unique_values_to_be_between",
+      "kwargs": {
+        "column": "date_of_birth",
+        "max_value": 0.9,
+        "min_value": 0.7
+      },
+      "meta": {}
+    },
+    {
+      "expectation_type": "expect_column_min_to_be_between",
+      "kwargs": {
+        "column": "age",
+        "max_value": 18,
+        "min_value": 12
+      },
+      "meta": {}
+    },
+    {
+      "expectation_type": "expect_column_max_to_be_between",
+      "kwargs": {
+        "column": "age",
+        "max_value": 63,
+        "min_value": 35
+      },
+      "meta": {}
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "age",
+        "mostly": 0.95
+      },
+      "meta": {}
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_in_type_list",
+      "kwargs": {
+        "column": "age",
+        "type_list": [
+          "INTEGER",
+          "integer",
+          "int",
+          "int_",
+          "int8",
+          "int16",
+          "int32",
+          "int64",
+          "uint8",
+          "uint16",
+          "uint32",
+          "uint64",
+          "INT",
+          "TINYINT",
+          "BYTEINT",
+          "SMALLINT",
+          "BIGINT",
+          "IntegerType",
+          "LongType",
+          "DECIMAL"
+        ]
+      },
+      "meta": {}
+    },
+    {
+      "expectation_type": "expect_column_min_to_be_between",
+      "kwargs": {
+        "column": "height",
+        "max_value": 165,
+        "min_value": 155
+      },
+      "meta": {}
+    },
+    {
+      "expectation_type": "expect_column_max_to_be_between",
+      "kwargs": {
+        "column": "height",
+        "max_value": 500,
+        "min_value": 30
+      },
+      "meta": {}
+    },
+    {
+      "expectation_type": "expect_column_mean_to_be_between",
+      "kwargs": {
+        "column": "height",
+        "max_value": 186.0,
+        "min_value": 176.0
+      },
+      "meta": {}
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "height",
+        "mostly": 0.43
+      },
+      "meta": {}
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_in_type_list",
+      "kwargs": {
+        "column": "height",
+        "type_list": [
+          "INTEGER",
+          "integer",
+          "int",
+          "int_",
+          "int8",
+          "int16",
+          "int32",
+          "int64",
+          "uint8",
+          "uint16",
+          "uint32",
+          "uint64",
+          "INT",
+          "TINYINT",
+          "BYTEINT",
+          "SMALLINT",
+          "BIGINT",
+          "IntegerType",
+          "LongType",
+          "DECIMAL"
+        ]
+      },
+      "meta": {}
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_in_set",
+      "kwargs": {
+        "column": "foot",
+        "value_set": [
+          "-",
+          "both",
+          "left",
+          "right"
+        ]
+      },
+      "meta": {}
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "foot",
+        "mostly": 0.64
+      },
+      "meta": {}
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_in_type_list",
+      "kwargs": {
+        "column": "foot",
+        "type_list": [
+          "CHAR",
+          "VARCHAR",
+          "NVARCHAR",
+          "TEXT",
+          "STRING",
+          "StringType",
+          "string",
+          "str"
+        ]
+      },
+      "meta": {}
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "joined",
+        "mostly": 0.77
+      },
+      "meta": {}
+    },
+    {
+      "expectation_type": "expect_column_min_to_be_between",
+      "kwargs": {
+        "column": "market_value",
+        "max_value": 10.0,
+        "min_value": 0.01
+      },
+      "meta": {}
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_in_type_list",
+      "kwargs": {
+        "column": "market_value",
+        "type_list": [
+          "FLOAT",
+          "DOUBLE",
+          "FLOAT4",
+          "FLOAT8",
+          "DOUBLE_PRECISION",
+          "NUMERIC",
+          "FloatType",
+          "DoubleType",
+          "float_",
+          "float16",
+          "float32",
+          "float64",
+          "number",
+          "DECIMAL"
+        ]
+      },
+      "meta": {}
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "nationality",
+        "mostly": 0.99
+      },
+      "meta": {}
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_in_type_list",
+      "kwargs": {
+        "column": "nationality",
+        "type_list": [
+          "CHAR",
+          "VARCHAR",
+          "NVARCHAR",
+          "TEXT",
+          "STRING",
+          "StringType",
+          "string",
+          "str"
+        ]
+      },
+      "meta": {}
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "nation_flag_url",
+        "mostly": 0.99
+      },
+      "meta": {}
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_in_type_list",
+      "kwargs": {
+        "column": "nation_flag_url",
+        "type_list": [
+          "CHAR",
+          "VARCHAR",
+          "NVARCHAR",
+          "TEXT",
+          "STRING",
+          "StringType",
+          "string",
+          "str"
+        ]
+      },
+      "meta": {}
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "player_picture_url"
+      },
+      "meta": {}
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_in_type_list",
+      "kwargs": {
+        "column": "player_picture_url",
+        "type_list": [
+          "CHAR",
+          "VARCHAR",
+          "NVARCHAR",
+          "TEXT",
+          "STRING",
+          "StringType",
+          "string",
+          "str"
+        ]
+      },
+      "meta": {}
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "updated_on"
+      },
+      "meta": {}
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "season"
+      },
+      "meta": {}
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_in_type_list",
+      "kwargs": {
+        "column": "season",
+        "type_list": [
+          "INTEGER",
+          "integer",
+          "int",
+          "int_",
+          "int8",
+          "int16",
+          "int32",
+          "int64",
+          "uint8",
+          "uint16",
+          "uint32",
+          "uint64",
+          "INT",
+          "TINYINT",
+          "BYTEINT",
+          "SMALLINT",
+          "BIGINT",
+          "IntegerType",
+          "LongType",
+          "DECIMAL"
+        ]
+      },
+      "meta": {}
+    }
+  ],
+  "meta": {
+    "columns": {
+      "age": {
+        "description": "Player age."
+      },
+      "contract_expires": {
+        "description": "Contract expiration date within the given season"
+      },
+      "date_of_birth": {
+        "description": "Player's date of birth"
+      },
+      "foot": {
+        "description": "Player's preferred foot"
+      },
+      "height": {
+        "description": "Player's height"
+      },
+      "joined": {
+        "description": "Date when player joined team in the given season"
+      },
+      "league": {
+        "description": "The league in which the player plays in the given season"
+      },
+      "market_value": {
+        "description": "The player's market value (available only from 2005 on)"
+      },
+      "name": {
+        "description": "The player's name and surname"
+      },
+      "nation_flag_url": {
+        "description": "The url pointing to the player's nation flag"
+      },
+      "nationality": {
+        "description": "The player's nationality"
+      },
+      "player_picture_url": {
+        "description": "The url pointing to a picture of the player"
+      },
+      "role": {
+        "description": "The player's role in the given season"
+      },
+      "season": {
+        "description": "The sport season from 1970 on. Ex 2020 means season 2020/21"
+      },
+      "team": {
+        "description": "The team where the player plays for the given season"
+      },
+      "updated_on": {
+        "description": "The date when the data was collected"
+      }
+    },
+    "great_expectations_version": "0.13.18"
+  }
+}
