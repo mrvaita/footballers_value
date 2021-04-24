@@ -10,6 +10,7 @@ from collections import OrderedDict
 from config import Config
 from datetime import datetime
 from prefect import Flow, task, unmapped, flatten
+from prefect.engine import signals
 from prefect.run_configs import LocalRun
 from prefect.tasks.database import SQLiteScript
 from utils import (
@@ -57,7 +58,6 @@ def get_season_urls(season):
     ]
 
     return league_urls
-
 
 
 @task(task_run_name="collect {league_url} team urls")
@@ -171,7 +171,7 @@ insert_team_players = SQLiteScript(
 )
 
 
-#@task(task_run_name="validate season {season} data")
+@task(task_run_name="validate season {season} data")
 def validate_data(season):
     context = ge.data_context.DataContext()
 
@@ -197,6 +197,10 @@ def validate_data(season):
 
     print(results["success"])
 
+    if not results["success"]:
+        raise signals.FAIL()
+    else:
+        return results["success"]
 
 
 def scrape_transfermarkt(league_urls, season):
@@ -221,9 +225,14 @@ def scrape_transfermarkt(league_urls, season):
 
         queries = create_insert_query.map(team_players, unmapped(season))
 
-        insert = insert_team_players.map(
+        staging = insert_team_players.map(
             script=queries,
             upstream_tasks=[unmapped(db)],
+        )
+
+        validate = validate_data(
+            season,
+            upstream_tasks=[staging],
         )
 
     return flow
@@ -233,13 +242,15 @@ def main():
     now = datetime.now()
 
     season = now.year - 1  # e.g. season 2020/21 is 2020
+    season = 2011
 
     league_urls = get_season_urls(season)
     flow = scrape_transfermarkt(league_urls, season)
-    #flow.run()  # for testing
-    flow.register("transfermarkt")
+    flow.run()  # for testing
+    #flow.register("transfermarkt")
+    #flow.visualize()
 
 
 if __name__ == "__main__":
-    #main()
-    validate_data(1972)
+    main()
+    #validate_data(1972)
