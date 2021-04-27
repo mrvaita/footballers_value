@@ -19,6 +19,7 @@
           "market_value",
           "nationality",
           "nation_flag_url",
+          "player_transfermarkt_id",
           "player_picture_url",
           "updated_on",
           "season"
@@ -356,15 +357,6 @@
       "meta": {}
     },
     {
-      "expectation_type": "expect_column_min_to_be_between",
-      "kwargs": {
-        "column": "market_value",
-        "max_value": 10.0,
-        "min_value": 0.01
-      },
-      "meta": {}
-    },
-    {
       "expectation_type": "expect_column_values_to_be_in_type_list",
       "kwargs": {
         "column": "market_value",
@@ -433,6 +425,42 @@
           "StringType",
           "string",
           "str"
+        ]
+      },
+      "meta": {}
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "player_transfermarkt_id"
+      },
+      "meta": {}
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_in_type_list",
+      "kwargs": {
+        "column": "player_transfermarkt_id",
+        "type_list": [
+          "INTEGER",
+          "integer",
+          "int",
+          "int_",
+          "int8",
+          "int16",
+          "int32",
+          "int64",
+          "uint8",
+          "uint16",
+          "uint32",
+          "uint64",
+          "INT",
+          "TINYINT",
+          "BYTEINT",
+          "SMALLINT",
+          "BIGINT",
+          "IntegerType",
+          "LongType",
+          "DECIMAL"
         ]
       },
       "meta": {}

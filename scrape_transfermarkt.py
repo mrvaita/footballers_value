@@ -115,6 +115,7 @@ def get_players_data(team_info):
                 ("market_value", convert_market_value(player_info[9])),
                 ("nationality", extract_nationality(row)),
                 ("nation_flag_url", extract_nation_flag_url(row)),
+                ("player_transfermarkt_id", int(row.find("a", {"class": "spielprofil_tooltip"})["id"])),
                 ("player_picture_url", row.find("img", {"class": "bilderrahmen-fixed"})["src"]),
                 ("updated_on", datetime.today().strftime("%Y-%m-%d")),
                 ("season", int(team_url.split("/")[-3])),
@@ -128,8 +129,8 @@ def get_players_data(team_info):
     return players
 
 
-@task(task_run_name="Get Create Schema query")
-def get_db_schema(schema, season):
+@task(task_run_name="Get raw data schema and data staging query")
+def get_raw_db_schema(schema, season):
     with open(schema) as f:
         query = f.read()
     return query.format(season=season)
@@ -164,8 +165,8 @@ def create_insert_query(team_data, season):
         return insert_cmd + values
 
 
-insert_team_players = SQLiteScript(
-	name="Insert Team",
+stage_team_players = SQLiteScript(
+	name="Insert Team to staging table",
     db=Config.db_filename,
     tags=["db"],
 )
@@ -195,12 +196,57 @@ def validate_data(season):
     # Run validation!
     results = my_checkpoint.run()
 
-    print(results["success"])
-
     if not results["success"]:
         raise signals.FAIL()
     else:
         return results["success"]
+
+
+@task(task_run_name="build insert into raw table query for season {season}")
+def get_insert_to_raw_query(season):
+    query = """
+    INSERT INTO players_raw
+    SELECT * FROM players_{season}_staging
+    """.format(season=season)
+
+    return query
+
+
+add_players_to_raw_table = SQLiteScript(
+	name="Add players to raw data table",
+    db=Config.db_filename,
+    tags=["db"],
+)
+
+
+@task(task_run_name="load database schema query for season {season}")
+def get_db_schema_query(schema, season):
+    with open(schema) as f:
+        query = f.read()
+    return query.format(season=season)
+
+
+add_players_to_star_schema = SQLiteScript(
+	name="Add players to star schema tables",
+    db=Config.db_filename,
+    tags=["db"],
+)
+
+
+@task(task_run_name="get drop staging table query for season {season}")
+def get_drop_staging_query(season):
+    query="""
+    DROP TABLE IF EXISTS players_{season}_staging
+    """.format(season=season)
+
+    return query
+
+
+drop_staging_table = SQLiteScript(
+    name="Drop staging table",
+    db=Config.db_filename,
+    tags=["db"],
+)
 
 
 def scrape_transfermarkt(league_urls, season):
@@ -214,8 +260,8 @@ def scrape_transfermarkt(league_urls, season):
             flatten(team_urls),
         )
 
-        db_schema = get_db_schema(
-            Config.db_schema,
+        db_schema = get_raw_db_schema(
+            Config.raw_db_schema,
             season,
         )
 
@@ -225,7 +271,7 @@ def scrape_transfermarkt(league_urls, season):
 
         queries = create_insert_query.map(team_players, unmapped(season))
 
-        staging = insert_team_players.map(
+        staging = stage_team_players.map(
             script=queries,
             upstream_tasks=[unmapped(db)],
         )
@@ -235,6 +281,30 @@ def scrape_transfermarkt(league_urls, season):
             upstream_tasks=[staging],
         )
 
+        insert_raw_query = get_insert_to_raw_query(season)
+
+        insert_to_raw_table = add_players_to_raw_table(
+            script=insert_raw_query,
+            upstream_tasks=[validate],
+        )
+
+        insert_to_schema_query = get_db_schema_query(
+            Config.db_star_schema,
+            season,
+        )
+
+        insert_to_schema = add_players_to_star_schema(
+            script=insert_to_schema_query,
+            upstream_tasks=[insert_to_raw_table],
+        )
+
+        drop_staging_query = get_drop_staging_query(season)
+
+        drop_staging = drop_staging_table(
+            script=drop_staging_query,
+            upstream_tasks=[insert_to_schema],
+        )
+
     return flow
 
 
@@ -242,9 +312,11 @@ def main():
     now = datetime.now()
 
     season = now.year - 1  # e.g. season 2020/21 is 2020
-    season = 2011
+    season = 1970
 
     league_urls = get_season_urls(season)
+    #team_urls = get_teams_urls(league_urls[0])
+    #team_players = get_players_data(team_urls[0])
     flow = scrape_transfermarkt(league_urls, season)
     flow.run()  # for testing
     #flow.register("transfermarkt")
@@ -253,4 +325,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-    #validate_data(1972)
+    #validate_data(1990)
