@@ -1,8 +1,16 @@
+DROP TABLE IF EXISTS career_length;
+CREATE TABLE IF NOT EXISTS career_length (
+    player_name VARCHAR
+    ,career INTEGER
+);
+
+INSERT INTO career_length (player_name, career)
 SELECT
-    name
+    p.name
     ,COUNT(1) AS career
-FROM players
-GROUP BY name, date_of_birth
-ORDER BY carreer DESC
-LIMIT 10
+FROM season s
+JOIN player p
+    ON s.player_id_fk = p.id
+GROUP BY p.id
+ORDER BY career DESC
 ;
