@@ -57,6 +57,7 @@ CREATE TABLE IF NOT EXISTS season (
     year INTEGER
     ,player_id_fk INTEGER
     ,team_id_fk INTEGER
+    ,league VARCHAR
     ,player_market_value INTEGER
     ,role_id_fk INTEGER
     ,player_age INTEGER
@@ -117,10 +118,11 @@ ON p1.nationality = n.name
 WHERE p2.name IS NULL AND p2.date_of_birth IS NULL
 ;
 
-INSERT INTO season (year, player_id_fk, team_id_fk, player_market_value, role_id_fk, player_age, player_joined_team, player_contract_expires, updated_on)
+INSERT INTO season (year, player_id_fk, team_id_fk, league, player_market_value, role_id_fk, player_age, player_joined_team, player_contract_expires, updated_on)
 SELECT p1.season
     ,p2.id
     ,t.id
+    ,p1.league
     ,p1.market_value
     ,r.id
     ,p1.age

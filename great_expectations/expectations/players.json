@@ -196,7 +196,7 @@
       "kwargs": {
         "column": "age",
         "max_value": 18,
-        "min_value": 12
+        "min_value": 11
       },
       "meta": {}
     },
@@ -352,7 +352,7 @@
       "expectation_type": "expect_column_values_to_not_be_null",
       "kwargs": {
         "column": "joined",
-        "mostly": 0.77
+        "mostly": 0.75
       },
       "meta": {}
     },
