@@ -33,7 +33,8 @@ class Config:
 
     db_filename = "football_players.sqlite"
 
-    db_schema = "queries/db_schema.sql"
+    raw_db_schema = "queries/db_schema.sql"
+    db_star_schema = "queries/star_schema.sql"
 
     table_columns = [
         "name",
@@ -49,6 +50,7 @@ class Config:
         "market_value",
         "nationality",
         "nation_flag_url",
+        "player_transfermarkt_id",
         "player_picture_url",
         "updated_on",
         "season",
