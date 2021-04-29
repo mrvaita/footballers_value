@@ -196,7 +196,7 @@
       "kwargs": {
         "column": "age",
         "max_value": 18,
-        "min_value": 11
+        "min_value": 10
       },
       "meta": {}
     },
