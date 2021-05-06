@@ -18,7 +18,6 @@ def populate_season(league_urls, season):
 
 with Flow("scrape seasons", run_config=LocalRun()) as flow:
     seasons = range(1970, datetime.now().year - 1, 1)
-    seasons = range(1971, 1975, 1)
 
     leagues_urls = get_competition_urls.map(seasons)
     

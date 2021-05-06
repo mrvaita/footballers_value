@@ -335,11 +335,8 @@ def main():
     now = datetime.now()
 
     season = now.year - 1  # e.g. season 2020/21 is 2020
-    season = 1970
 
     league_urls = get_season_urls(season)
-    #team_urls = get_teams_urls(league_urls[0])
-    #team_players = get_players_data(team_urls[0])
     flow = scrape_transfermarkt(league_urls, season)
     flow.run()  # for testing
     #flow.register("transfermarkt")
@@ -348,4 +345,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    #validate_data(1990)
