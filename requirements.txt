@@ -1,0 +1,8 @@
+beautifulsoup4
+dash
+pandas
+prefect
+great-expectations
+python-dotenv
+GitPython
+SQLAlchemy
