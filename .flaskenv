@@ -1,0 +1,5 @@
+FLASK_APP=dashboard.py
+FLASK_DEBUG=1
+FLASK_ENV=development
+LC_ALL=C.UTF-8
+LANG=C.UTF-8

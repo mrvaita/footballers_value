@@ -7,6 +7,11 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Output, Input
 
+from flask import Flask, request, abort, redirect
+import git
+import hashlib
+import hmac
+import os
 
 db = sqlite3.connect(Config.db_filename)
 df_foreigners = pd.read_sql_query("SELECT * FROM ratio_foreigner_players", db)
@@ -15,7 +20,8 @@ leagues = df_foreigners["league"].unique()
 roles = df_averages["role"].unique()
 avgs = [col for col in df_averages.columns if "avg_" in col]
 
-app = dash.Dash(__name__)
+server = Flask(__name__)
+app = dash.Dash(__name__, server=server, url_base_pathname="/dashboard/")
 
 app.layout = html.Div([
     html.Div([
@@ -108,5 +114,51 @@ def update_avg_chart(league, role, avg):
     return avg_chart_figure
 
 
+########################## Github Webhook ##########################
+
+@server.route("/")
+def render_dashboard():
+    return redirect("/dashboard")
+
+
+@server.route("/update_server", methods=["POST"])
+def webhook():
+    if request.method == "POST":
+        payload = validate_request(request)
+        repo = git.Repo("/home/mrvaita/git-repos/pythonanywhere_deploy")
+        origin = repo.remotes.origin
+        origin.pull()
+            
+        return "Updated PythonAnywhere successfully", 200
+    else:
+        return "Wrong event type", 400
+
+
+def validate_request(req):
+    abort_code = 418
+    x_hub_signature = req.headers.get("X-Hub-Signature")
+    if not is_valid_signature(x_hub_signature, req.data):
+        print(f"Deploy signature failed: {x_hub_signature}")
+        abort(abort_code)
+
+    if (payload := request.get_json()) is None:
+        print(f"Payload is empty: {payload}")
+        abort(abort_code)
+
+    return payload
+
+
+def is_valid_signature(x_hub_signature, data, private_key=os.getenv("WEBHOOK_SECRET")):
+    """Verify webhook signature.
+    """
+    hash_algorithm, github_signature = x_hub_signature.split("=", 1)
+    algorithm = hashlib.__dict__.get(hash_algorithm)
+    encoded_key = bytes(private_key, "latin-1")
+    mac = hmac.new(encoded_key, msg=data, digestmod=algorithm)
+
+    return hmac.compare_digest(mac.hexdigest(), github_signature)
+
+
 if __name__ == "__main__":
-    app.run_server(debug=True)
+    #app.run_server(debug=True)
+    server.run(host="0.0.0.0", debug=True)
