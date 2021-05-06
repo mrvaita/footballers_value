@@ -249,6 +249,20 @@ drop_staging_table = SQLiteScript(
 )
 
 
+@task(task_run_name="Prepare data for dashboard")
+def get_aggregate_data_query(schema):
+    with open(schema) as f:
+        query = f.read()
+    return query
+
+
+aggregate_data = SQLiteScript(
+    name="Aggregate data for dashboard",
+    db=Config.db_filename,
+    tags=["db"],
+)
+
+
 def scrape_transfermarkt(league_urls, season):
     """Given a list of league urls, collects and adds fooltball players data to
     an sqlite database.
@@ -302,6 +316,15 @@ def scrape_transfermarkt(league_urls, season):
 
         drop_staging = drop_staging_table(
             script=drop_staging_query,
+            upstream_tasks=[insert_to_schema],
+        )
+
+        dashboard_query = get_aggregate_data_query(
+            Config.data_aggregation_schema
+        )
+
+        dashboard = aggregate_data(
+            script=dashboard_query,
             upstream_tasks=[insert_to_schema],
         )
 

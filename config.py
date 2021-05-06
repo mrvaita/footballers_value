@@ -35,6 +35,7 @@ class Config:
 
     raw_db_schema = "queries/db_schema.sql"
     db_star_schema = "queries/star_schema.sql"
+    data_aggregation_schema = "queries/dashboard.sql"
 
     table_columns = [
         "name",
