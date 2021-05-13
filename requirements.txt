@@ -6,3 +6,4 @@ great-expectations
 python-dotenv
 GitPython
 SQLAlchemy
+gunicorn

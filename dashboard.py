@@ -125,7 +125,7 @@ def render_dashboard():
 def webhook():
     if request.method == "POST":
         payload = validate_request(request)
-        repo = git.Repo("/home/mrvaita/git-repos/pythonanywhere_deploy")
+        repo = git.Repo("/home/pi/Documents/git-repos/footballers_value")
         origin = repo.remotes.origin
         origin.pull()
             
