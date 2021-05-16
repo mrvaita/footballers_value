@@ -141,7 +141,8 @@ def validate_request(req):
         print(f"Deploy signature failed: {x_hub_signature}")
         abort(abort_code)
 
-    if (payload := request.get_json()) is None:
+    payload = request.get_json()
+    if payload is None:
         print(f"Payload is empty: {payload}")
         abort(abort_code)
 
@@ -157,8 +158,3 @@ def is_valid_signature(x_hub_signature, data, private_key=os.getenv("WEBHOOK_SEC
     mac = hmac.new(encoded_key, msg=data, digestmod=algorithm)
 
     return hmac.compare_digest(mac.hexdigest(), github_signature)
-
-
-if __name__ == "__main__":
-    #app.run_server(debug=True)
-    server.run(host="0.0.0.0", debug=True)
