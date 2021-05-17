@@ -4,7 +4,7 @@ from datetime import datetime
 
 logging.basicConfig(
     filename="scrape_transfermarkt.log",
-    filemode="w", 
+    filemode="a", 
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
