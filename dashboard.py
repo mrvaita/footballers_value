@@ -25,6 +25,7 @@ import hashlib
 import hmac
 import os
 
+
 db = sqlite3.connect(Config.db_filename)
 df_foreigners = pd.read_sql_query("SELECT * FROM ratio_foreigner_players", db)
 df_averages = pd.read_sql_query("SELECT * FROM avg_players", db)
@@ -172,7 +173,6 @@ def webhook():
             abort(abort_code)
 
         # Pull changes from main branch
-        #payload = validate_request(request)
         repo = git.Repo("/home/pi/Documents/git-repos/footballers_value")
         origin = repo.remotes.origin
         origin.pull()
@@ -180,21 +180,6 @@ def webhook():
         return "Server updated successfully!!", 200
     else:
         return "Wrong event type!", 400
-
-
-# def validate_request(req):
-#     abort_code = 419
-#     x_hub_signature = req.headers.get("X-Hub-Signature")
-#     if not is_valid_signature(x_hub_signature, req.data):
-#         print(f"Deploy signature failed: {x_hub_signature}")
-#         abort(abort_code)
-# 
-#     payload = req.get_json()
-#     if payload is None:
-#         print(f"Payload is empty: {payload}")
-#         abort(abort_code)
-# 
-#     return payload
 
 
 def is_valid_signature(x_hub_signature, data, private_key=os.getenv("SECRET_KEY")):
