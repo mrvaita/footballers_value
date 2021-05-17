@@ -1,3 +1,15 @@
+"""Dashboard to visualize football players data.
+
+This script allows the visualization of some data about football players
+performing in the five most important european football competitions (Serie A,
+1-Bundesliga, Premier League, La Liga and League 1).
+Two visualisations compose the dashboard. The first one shows how the number of
+foreign players (expressed in percentage) performing in each league changes
+1970 until today.
+The second visualisation shows how average age, height and value of the players
+groupd by role change from 1970 until today.
+"""
+
 import sqlite3
 import pandas as pd
 from config import Config
@@ -78,6 +90,15 @@ app.layout = html.Div([
     Input("leaguefilter", "value"),
 )
 def update_chart(league):
+    """This callback recalculate the visualisation after parameter selection in
+    the corresponding dropdown menu associated to the graph.
+
+    Parameters:
+    league str: The league name.
+
+    returns:
+    the recalculated DASH chart
+    """
     filtered_df = df_foreigners.loc[df_foreigners["league"] == league, :]
     foreigners_chart_figure = {
         "data": [{
@@ -97,6 +118,17 @@ def update_chart(league):
     Input("avgfilter", "value")
 )
 def update_avg_chart(league, role, avg):
+    """This callback recalculate the visualisation after parameter selection in
+    the corresponding dropdown menu associated to the graph.
+
+    Parameters:
+    league str: The league name.
+    role str: The football role of interest.
+    avg str: The average parameter of interest.
+
+    returns:
+    the recalculated DASH chart
+    """
     df_mask = (
         (df_averages["league"] == league) &
         (df_averages["role"] == role)
@@ -114,17 +146,33 @@ def update_avg_chart(league, role, avg):
     return avg_chart_figure
 
 
-########################## Github Webhook ##########################
-
 @server.route("/")
 def render_dashboard():
     return redirect("/dashboard")
 
 
+########################## Github Webhook ##########################
+
 @server.route("/update_server", methods=["POST"])
 def webhook():
+    """A github webhook pushes a payload to this route once changes are made to
+    the remote repo. The request is first validated and only afterwards the
+    changes are pulled from the main branch.
+
+    returns:
+    str: a message to the client that performed the request.
+    """
     if request.method == "POST":
-        payload = validate_request(request)
+
+        # Validate request
+        abort_code = 418
+        x_hub_signature = req.headers.get("X-Hub-Signature")
+        if not is_valid_signature(x_hub_signature, request.data):
+            print(f"Deploy signature failed: {x_hub_signature}")
+            abort(abort_code)
+
+        # Pull changes from main branch
+        #payload = validate_request(request)
         repo = git.Repo("/home/pi/Documents/git-repos/footballers_value")
         origin = repo.remotes.origin
         origin.pull()
@@ -134,23 +182,32 @@ def webhook():
         return "Wrong event type!", 400
 
 
-def validate_request(req):
-    abort_code = 418
-    x_hub_signature = req.headers.get("X-Hub-Signature")
-    if not is_valid_signature(x_hub_signature, req.data):
-        print(f"Deploy signature failed: {x_hub_signature}")
-        abort(abort_code)
-
-    payload = req.get_json()
-    if payload is None:
-        print(f"Payload is empty: {payload}")
-        abort(abort_code)
-
-    return payload
+# def validate_request(req):
+#     abort_code = 419
+#     x_hub_signature = req.headers.get("X-Hub-Signature")
+#     if not is_valid_signature(x_hub_signature, req.data):
+#         print(f"Deploy signature failed: {x_hub_signature}")
+#         abort(abort_code)
+# 
+#     payload = req.get_json()
+#     if payload is None:
+#         print(f"Payload is empty: {payload}")
+#         abort(abort_code)
+# 
+#     return payload
 
 
 def is_valid_signature(x_hub_signature, data, private_key=os.getenv("SECRET_KEY")):
     """Verify webhook signature.
+
+    Parameters:
+    x_hub_signature str: the signature and the hash algorithm from the Github
+        Webhook.
+    data str: the data from the request.
+    private_key str: the local secret key.
+
+    returns:
+    boolean: True if signature is valid and False otherwise.
     """
     hash_algorithm, github_signature = x_hub_signature.split("=", 1)
     algorithm = hashlib.__dict__.get(hash_algorithm)
