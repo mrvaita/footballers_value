@@ -21,7 +21,7 @@ roles = df_averages["role"].unique()
 avgs = [col for col in df_averages.columns if "avg_" in col]
 
 server = Flask(__name__)
-app = dash.Dash(__name__, server=server, url_base_pathname="/dashboard")
+app = dash.Dash(__name__, server=server, url_base_pathname="/dashboard/")
 
 app.layout = html.Div([
     html.Div([
@@ -121,8 +121,7 @@ def render_dashboard():
     return redirect("/dashboard")
 
 
-#@server.route("/update_server", methods=["POST"])
-@server.route("/server_update", methods=["POST"])
+@server.route("/update_server", methods=["POST"])
 def webhook():
     if request.method == "POST":
         #payload = validate_request(request)
