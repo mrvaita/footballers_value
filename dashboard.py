@@ -21,7 +21,7 @@ roles = df_averages["role"].unique()
 avgs = [col for col in df_averages.columns if "avg_" in col]
 
 server = Flask(__name__)
-app = dash.Dash(__name__, server=server, url_base_pathname="/dashboard/")
+app = dash.Dash(__name__, server=server, url_base_pathname="/dashboard")
 
 app.layout = html.Div([
     html.Div([
