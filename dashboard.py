@@ -131,7 +131,7 @@ def webhook():
             
         return "Server updated successfully!", 200
     else:
-        return "Wrong event type", 400
+        return "Wrong event type!", 400
 
 
 def validate_request(req):
