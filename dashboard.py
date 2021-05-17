@@ -149,7 +149,7 @@ def validate_request(req):
     return payload
 
 
-def is_valid_signature(x_hub_signature, data, private_key=os.getenv("WEBHOOK_SECRET")):
+def is_valid_signature(x_hub_signature, data, private_key=os.getenv("SECRET_KEY")):
     """Verify webhook signature.
     """
     hash_algorithm, github_signature = x_hub_signature.split("=", 1)
