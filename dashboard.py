@@ -124,11 +124,11 @@ def render_dashboard():
 @server.route("/update_server", methods=["POST"])
 def webhook():
     if request.method == "POST":
-        #payload = validate_request(request)
+        payload = validate_request(request)
         repo = git.Repo("/home/pi/Documents/git-repos/footballers_value")
         origin = repo.remotes.origin
         origin.pull()
-            
+
         return "Server updated successfully!", 200
     else:
         return "Wrong event type!", 400
