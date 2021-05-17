@@ -166,7 +166,7 @@ def webhook():
 
         # Validate request
         abort_code = 418
-        x_hub_signature = req.headers.get("X-Hub-Signature")
+        x_hub_signature = request.headers.get("X-Hub-Signature")
         if not is_valid_signature(x_hub_signature, request.data):
             print(f"Deploy signature failed: {x_hub_signature}")
             abort(abort_code)
@@ -177,7 +177,7 @@ def webhook():
         origin = repo.remotes.origin
         origin.pull()
 
-        return "Server updated successfully!!!", 200
+        return "Server updated successfully!", 200
     else:
         return "Wrong event type!", 400
 
