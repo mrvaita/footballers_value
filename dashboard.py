@@ -121,7 +121,8 @@ def render_dashboard():
     return redirect("/dashboard")
 
 
-@server.route("/update_server", methods=["POST"])
+#@server.route("/update_server", methods=["POST"])
+@server.route("/server_update", methods=["POST"])
 def webhook():
     if request.method == "POST":
         #payload = validate_request(request)
