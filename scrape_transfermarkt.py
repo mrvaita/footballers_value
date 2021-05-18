@@ -29,6 +29,18 @@ logger = logging.getLogger(__name__)
 
 
 def get_table_soup(url):
+    """Fetches html table with either team or player data from transfermarkt.
+
+    Args:
+        url: A string representing either the league or the team url for a
+          season.
+
+    Returns:
+        A list containing all the rows in the html table.
+
+    Raises:
+        Exception: An error in case the url is not valid.
+    """
 
     try:
         r = requests.get(url, headers={'User-Agent': 'Custom'})
@@ -46,6 +58,15 @@ def get_table_soup(url):
 
 
 def get_season_urls(season):
+    """Builds season urls for all the leagues.
+
+    Args:
+        season: An integer representing a football season (e.g. Season
+          2020-21 is 2020).
+
+    Returns:
+        a list containing league urls for the considered season.
+    """
 
     if season < Config.populate_db_params["start_premier_league"]:
         league_base_strings = Config.league_base_strings[1:]
@@ -65,8 +86,12 @@ def get_teams_urls(league_url):
     """Given a league url for transfermarkt, it returns urls for all the teams 
     partecipating to that league in the specified season.
 
-    return:
-    tuple: (team_url: str, league_name: str)
+    Args:
+        league_url: A string representing a league url for a specific season.
+
+    Returns:
+        A tuple (team_url: str, league_name: str) containing the team_url
+          and the league name.
     """
 
     table_rows = get_table_soup(league_url)
@@ -89,6 +114,17 @@ def get_teams_urls(league_url):
 
 @task(task_run_name="collect {team_info} players")
 def get_players_data(team_info):
+    """Fetches players data.
+
+    Retrieves data for all players in a team.
+
+    Args:
+        team_info: A tuple containing the team url and the league name.
+
+    Returns:
+        A list of dictionaries. Each dictionary contains data for each player
+          in the team.
+    """
 
     team_url = team_info[0]
     table_rows = get_table_soup(team_url)
@@ -131,6 +167,16 @@ def get_players_data(team_info):
 
 @task(task_run_name="Get raw data schema and data staging query")
 def get_raw_db_schema(schema, season):
+    """Fetches an SQL query with raw data table and data staging table.
+
+    Args:
+        schema: a template file with the query.
+        season: an integer representing the season.
+
+    Returns:
+        A string with the query.
+    """
+
     with open(schema) as f:
         query = f.read()
     return query.format(season=season)
@@ -146,6 +192,17 @@ create_db = SQLiteScript(
 
 @task(task_run_name="Create Insert data query for season {season}")
 def create_insert_query(team_data, season):
+    """Generates an SQL query to insert player data into the staging table.
+
+    Args:
+        team_data: A list of dictionaries containing data for each player in a
+          team.
+        season: An integer representing the current season.
+
+    Returns:
+        A string representing the SQL query.
+    """
+
     if len(team_data) == 0:
         return "--"
     else:
@@ -174,6 +231,18 @@ stage_team_players = SQLiteScript(
 
 @task(task_run_name="validate season {season} data")
 def validate_data(season):
+    """Validates the staged data using great expectations.
+
+    Args:
+        season: An integer representing the current season.
+
+    Returns:
+        True if the validation succeedes.
+
+    Raises:
+        A prefect FAIL signal if the validation does not succedes.
+    """
+
     context = ge.data_context.DataContext()
 
     # Configuring data batch to validate
@@ -204,6 +273,15 @@ def validate_data(season):
 
 @task(task_run_name="build insert into raw table query for season {season}")
 def get_insert_to_raw_query(season):
+    """Builds a query to insert staged data into the raw data table.
+
+    Args:
+        season: An integer representing the current season.
+
+    Returns:
+        A string with the formatted query.
+    """
+    
     query = """
     INSERT INTO players_raw
     SELECT * FROM players_{season}_staging
@@ -221,6 +299,17 @@ add_players_to_raw_table = SQLiteScript(
 
 @task(task_run_name="load database schema query for season {season}")
 def get_db_schema_query(schema, season):
+    """Fetches an SQL query to populate the normalized data tables from the raw
+    data table.
+
+    Args:
+        schema: a template file with the query.
+        season: an integer representing the season.
+
+    Returns:
+        A string with the query.
+    """
+
     with open(schema) as f:
         query = f.read()
     return query.format(season=season)
@@ -235,6 +324,15 @@ add_players_to_star_schema = SQLiteScript(
 
 @task(task_run_name="get drop staging table query for season {season}")
 def get_drop_staging_query(season):
+    """Builds a query to drop staged data table.
+
+    Args:
+        season: An integer representing the current season.
+
+    Returns:
+        A string with the formatted query.
+    """
+    
     query="""
     DROP TABLE IF EXISTS players_{season}_staging
     """.format(season=season)
@@ -251,6 +349,16 @@ drop_staging_table = SQLiteScript(
 
 @task(task_run_name="Prepare data for dashboard")
 def get_aggregate_data_query(schema):
+    """Fetches an SQL query to aggregate data to be visualised in the
+    dashboard.
+
+    Args:
+        schema: a template file with the query.
+
+    Returns:
+        A string with the query.
+    """
+
     with open(schema) as f:
         query = f.read()
     return query
@@ -264,9 +372,19 @@ aggregate_data = SQLiteScript(
 
 
 def scrape_transfermarkt(league_urls, season):
-    """Given a list of league urls, collects and adds fooltball players data to
-    an sqlite database.
+    """Given a list of league urls, collects and adds fooltball players data
+    for a given season, to an sqlite database.
+
+    Args:
+        league_urls: A list containing league urls for a given season.
+        season: An integer representing the current season.
+
+    Returns:
+        A prefect flow instance mapping all the tasks that are necessary to
+          collect, validate, add to DB and aggregate players data for
+          visualisation.
     """
+
     with Flow("scrape transfermarkt season", run_config=LocalRun()) as flow:
         team_urls = get_teams_urls.map(league_urls)
         
@@ -332,13 +450,17 @@ def scrape_transfermarkt(league_urls, season):
 
 
 def main():
+    """Triggers the prefect pipeline to insert the most recent data to the
+    database.
+    """
+
     now = datetime.now()
 
     season = now.year - 1  # e.g. season 2020/21 is 2020
 
     league_urls = get_season_urls(season)
     flow = scrape_transfermarkt(league_urls, season)
-    flow.run()  # for testing
+    flow.run()
     #flow.register("transfermarkt")
     #flow.visualize()
 

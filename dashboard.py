@@ -94,12 +94,13 @@ def update_chart(league):
     """This callback recalculate the visualisation after parameter selection in
     the corresponding dropdown menu associated to the graph.
 
-    Parameters:
+    Args:
     league str: The league name.
 
-    returns:
+    Returns:
     the recalculated DASH chart
     """
+
     filtered_df = df_foreigners.loc[df_foreigners["league"] == league, :]
     foreigners_chart_figure = {
         "data": [{
@@ -122,14 +123,15 @@ def update_avg_chart(league, role, avg):
     """This callback recalculate the visualisation after parameter selection in
     the corresponding dropdown menu associated to the graph.
 
-    Parameters:
+    Args:
     league str: The league name.
     role str: The football role of interest.
     avg str: The average parameter of interest.
 
-    returns:
+    Returns:
     the recalculated DASH chart
     """
+
     df_mask = (
         (df_averages["league"] == league) &
         (df_averages["role"] == role)
@@ -160,9 +162,10 @@ def webhook():
     the remote repo. The request is first validated and only afterwards the
     changes are pulled from the main branch.
 
-    returns:
+    Returns:
     str: a message to the client that performed the request.
     """
+
     if request.method == "POST":
 
         # Validate request
@@ -185,13 +188,13 @@ def webhook():
 def is_valid_signature(x_hub_signature, data, private_key=os.getenv("SECRET_KEY")):
     """Verify webhook signature.
 
-    Parameters:
+    Args:
     x_hub_signature str: the signature and the hash algorithm from the Github
         Webhook.
     data str: the data from the request.
     private_key str: the local secret key.
 
-    returns:
+    Returns:
     boolean: True if signature is valid and False otherwise.
     """
     hash_algorithm, github_signature = x_hub_signature.split("=", 1)
