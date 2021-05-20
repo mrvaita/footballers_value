@@ -449,7 +449,7 @@ def scrape_transfermarkt(league_urls, season):
     return flow
 
 
-def main():
+def update_db():
     """Triggers the prefect pipeline to insert the most recent data to the
     database.
     """
@@ -466,4 +466,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    update_db()
