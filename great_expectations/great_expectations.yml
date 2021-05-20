@@ -15,7 +15,9 @@ config_version: 3.0
 # add a new datasource. Read more at https://docs.greatexpectations.io/en/latest/reference/core_concepts/datasource.html
 datasources:
   football_players:
-    credentials: ${football_players}
+    #credentials: ${football_players}
+    credentials:
+      url: ${DATABASE_URL}
     data_asset_type:
       module_name: great_expectations.dataset
       class_name: SqlAlchemyDataset

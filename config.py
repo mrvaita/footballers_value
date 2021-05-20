@@ -1,6 +1,11 @@
 import logging
+import os
 from datetime import datetime
+from dotenv import load_dotenv
 
+
+basedir = os.path.abspath(os.path.dirname(__file__))
+load_dotenv(os.path.join(basedir, ".env"))
 
 logging.basicConfig(
     filename="scrape_transfermarkt.log",
@@ -31,7 +36,10 @@ class Config:
 
     team_detailed_suffix_url = "/plus/1"
 
-    db_filename = "football_players.sqlite"
+    if os.environ.get("DATABASE_URL") == None:
+        raise OSError("DATABASE_URL enviroment variable not set")
+    else:
+        db_filename = os.environ.get("DATABASE_URL").split("/")[-1]
 
     raw_db_schema = "queries/db_schema.sql"
     db_star_schema = "queries/star_schema.sql"
