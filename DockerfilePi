@@ -5,6 +5,7 @@ RUN apt-get update -y && \
     python3.7 \
     python3-pip \
     python3.7-dev \
+    libatlas-base-dev \
     git
 
 # We copy just the requirements.txt first to leverage Docker cache
@@ -13,8 +14,8 @@ COPY ./requirements.txt /footballers_value/requirements.txt
 WORKDIR /footballers_value
 
 RUN python3 -m pip install -U pip && \
-    python3 -m pip install -r requirements.txt && \
-    python3 -m pip install gunicorn
+    #python3 -m pip install numpy --index-url https://www.piwheels.org/simple
+    python3 -m pip install -r requirements.txt --index-url https://www.piwheels.org/simple
 
 # Limit this copy exclusively to the necessary directories
 COPY . /footballers_value

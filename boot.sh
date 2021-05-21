@@ -1,6 +1,6 @@
 #!/bin/bash
 if [ ! -f ./football_players.sqlite ]; then
-    python populate_db.py
+    python3 populate_db.py
 fi
 
 gunicorn -b :5000 \
@@ -10,4 +10,4 @@ gunicorn -b :5000 \
     --daemon \
     wsgi:server
 
-python run_cron.py
+python3 run_cron.py
