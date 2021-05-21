@@ -15,6 +15,7 @@ WORKDIR /footballers_value
 
 RUN python3 -m pip install -U pip && \
     python3 -m pip install -r requirements.txt --index-url https://www.piwheels.org/simple
+# That fixes incompatibilities between pandas and numpy in tha Raspberry Pi
 RUN python3 -m pip install -U numpy --index-url https://www.piwheels.org/simple
 
 # Limit this copy exclusively to the necessary directories
