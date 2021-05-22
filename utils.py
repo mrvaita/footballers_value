@@ -134,22 +134,3 @@ def format_height(height: str) -> int:
             return int(height_cm)
     except ValueError:
         return None
-
-
-def sql_quote(value):
-    """Naive SQL quoting.
-
-    All values except NULL are returned as SQL strings in single quotes,
-    with any embedded quotes doubled.
-
-    Args:
-        value: Value to be quoted for SQL.
-
-    Returns:
-        A string with the value quoted for SQL.
-    """
-
-    if value is None:
-         return 'NULL'
-
-    return "'{}'".format(str(value).replace("'", "''"))
