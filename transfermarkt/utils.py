@@ -2,7 +2,8 @@ import re
 from datetime import datetime
 
 def convert_market_value(value: str) -> float:
-    """Takes a player's market value and convert is to float.
+    """Takes a player's market value and converts it to float.
+
     Market value can be expressed in two ways e.g., `€1.50m` or `€500Th.`.
     All the values will be converted into millions and returned as float.
 
@@ -24,7 +25,7 @@ def convert_market_value(value: str) -> float:
 
 def extract_date(date_age_str: str) -> str:
     """Given a string representing date of birt and age of a football player
-    (e.g. `Jan 01 1995 (28)`) extract the date.
+    (e.g. `Jan 01, 1995 (28)`) extract the date.
     
     Args:
         date_age_str: A string containing the date of interest.
@@ -92,7 +93,7 @@ def extract_nation_flag_url(soup) -> str:
 
 
 def convert_date(date_str: str) -> datetime:
-    """Convert a string date from of `Jan 01 2021` format into `2021-01-01`.
+    """Convert a string date from of `Jan 01, 2021` format into `2021-01-01`.
     
     Args:
         date_str: A string representig the date to be reformatted.

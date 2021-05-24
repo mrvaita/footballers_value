@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup
 from collections import OrderedDict
 from config import Config
 from datetime import datetime
-from utils import (
+from transfermarkt.utils import (
     convert_market_value,
     convert_date,
     format_height,
