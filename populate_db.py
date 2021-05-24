@@ -4,7 +4,8 @@ seasons from 1970 until today.
 
 from datetime import datetime
 from prefect import Flow, task
-from scrape_transfermarkt import scrape_transfermarkt, get_season_urls
+from collect_season import get_season
+from transfermarkt.scrape_transfermarkt import get_season_urls
 from prefect.run_configs import LocalRun
 
 
@@ -32,7 +33,7 @@ def populate_season(league_urls, season):
         season: An integer representing the current season.
     """
 
-    flow = scrape_transfermarkt(league_urls, season)
+    flow = get_season(league_urls, season)
 
     flow.run()
 

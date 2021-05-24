@@ -1,14 +1,14 @@
 import datetime
 import schedule
 import time
-from scrape_transfermarkt import update_db
+from collect_season import main
 
 day_to_run = 1  # run this starting on the 1st
 month_to_run = 1  # run this in January (the 1st month)
 
 def job():
     # the task to be executed
-    update_db()
+    main()
 
 while 1:
     date = datetime.datetime.now()
