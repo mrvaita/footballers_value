@@ -19,7 +19,7 @@ def get_competition_urls(season):
     Returns:
         A list including string urls for all the competitions.
     """
-    
+
     return get_season_urls(season)
 
 
@@ -42,7 +42,7 @@ with Flow("scrape seasons", run_config=LocalRun()) as flow:
     seasons = range(1970, datetime.now().year - 1, 1)
 
     leagues_urls = get_competition_urls.map(seasons)
-    
+
     results = populate_season.map(leagues_urls, seasons)
 
 

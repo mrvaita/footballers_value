@@ -1,6 +1,7 @@
 import re
 from datetime import datetime
 
+
 def convert_market_value(value: str) -> float:
     """Takes a player's market value and converts it to float.
 
@@ -26,7 +27,7 @@ def convert_market_value(value: str) -> float:
 def extract_date(date_age_str: str) -> str:
     """Given a string representing date of birt and age of a football player
     (e.g. `Jan 01, 1995 (28)`) extract the date.
-    
+
     Args:
         date_age_str: A string containing the date of interest.
 
@@ -35,7 +36,9 @@ def extract_date(date_age_str: str) -> str:
     """
 
     try:
-        date = convert_date(re.search(r"[A-Z][a-z]{2} \d{1,}, \d{4}", date_age_str).group(0))
+        date = convert_date(
+            re.search(r"[A-Z][a-z]{2} \d{1,}, \d{4}", date_age_str).group(0)
+        )
         return date
     except (AttributeError, TypeError):
         return None
@@ -44,12 +47,12 @@ def extract_date(date_age_str: str) -> str:
 def extract_age(date_age_str: str) -> str:
     """Given a string representing date of birt and age of a football player
     (e.g. `Jan 01 1995 (28)`) extract the age.
-    
+
     Args:
         date_age_str: A string containing the player age.
 
     Returns:
-        An integer with the player age. 
+        An integer with the player age.
     """
 
     try:
@@ -61,7 +64,7 @@ def extract_age(date_age_str: str) -> str:
 def extract_nationality(soup) -> str:
     """Given an instance of beautifulsoup extract the player nationality and
     and returns it as string.
-    
+
     Args:
         soup: A beautiful soup instance including the information of interest.
 
@@ -94,7 +97,7 @@ def extract_nation_flag_url(soup) -> str:
 
 def convert_date(date_str: str) -> datetime:
     """Convert a string date from of `Jan 01, 2021` format into `2021-01-01`.
-    
+
     Args:
         date_str: A string representig the date to be reformatted.
 
