@@ -3,13 +3,12 @@ import os
 from datetime import datetime
 from dotenv import load_dotenv
 
-
 basedir = os.path.abspath(os.path.dirname(__file__))
 load_dotenv(os.path.join(basedir, ".env"))
 
 logging.basicConfig(
     filename="scrape_transfermarkt.log",
-    filemode="a", 
+    filemode="a",
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
@@ -28,7 +27,7 @@ class Config:
 
     populate_db_params = dict([
         ("start_season", 1970),
-        ("end_season", datetime.now().year -1),
+        ("end_season", datetime.now().year - 1),
         ("start_premier_league", 1992),
     ])
 
@@ -36,7 +35,7 @@ class Config:
 
     team_detailed_suffix_url = "/plus/1"
 
-    if os.environ.get("DATABASE_URL") == None:
+    if os.environ.get("DATABASE_URL") is None:
         raise OSError("DATABASE_URL enviroment variable not set")
     else:
         db_filename = os.environ.get("DATABASE_URL").split("/")[-1]

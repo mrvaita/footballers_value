@@ -14,14 +14,16 @@ def create_insert_query(team_data, season):
         return "--"
     else:
         table_columns = ", ".join(list(team_data[0].keys()))
-        insert_cmd = f"INSERT INTO players_{season}_staging ({table_columns}) VALUES\n"
+        insert_cmd = (
+            f"INSERT INTO players_{season}_staging ({table_columns}) VALUES\n"
+        )
         values = "),\n".join(
             [", ".join(
                 [
                     "(" + sql_quote(value)
-                        if list(row.values()).index(value) == 0
-                        else sql_quote(value)
-                        for value in row.values()
+                    if list(row.values()).index(value) == 0
+                    else sql_quote(value)
+                    for value in row.values()
                 ]
             ) for row in team_data]
         ) + ");"
@@ -59,6 +61,6 @@ def sql_quote(value):
     """
 
     if value is None:
-         return 'NULL'
+        return 'NULL'
 
     return "'{}'".format(str(value).replace("'", "''"))

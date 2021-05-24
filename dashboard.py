@@ -45,7 +45,7 @@ app.layout = html.Div([
                     {'label': league, 'value': league} for league in leagues
                 ], value='serie-a'
             ),
-		], style={'width': '49%', 'display': 'inline-block'}),
+        ], style={'width': '49%', 'display': 'inline-block'}),
     ]),
     html.Div([
         dcc.Graph(
@@ -60,7 +60,7 @@ app.layout = html.Div([
                     {'label': league, 'value': league} for league in leagues
                 ], value='serie-a'
             ),
-		], style={'width': '33%', 'display': 'inline-block'}),
+        ], style={'width': '33%', 'display': 'inline-block'}),
         html.Div([
             dcc.Dropdown(
                 id="rolefilter",
@@ -68,7 +68,7 @@ app.layout = html.Div([
                     {"label": role, "value": role} for role in roles
                 ], value="Goalkeeper"
             ),
-		], style={"width": "33%", "display": "inline-block"}),
+        ], style={"width": "33%", "display": "inline-block"}),
         html.Div([
             dcc.Dropdown(
                 id="avgfilter",
@@ -76,7 +76,7 @@ app.layout = html.Div([
                     {"label": avg, "value": avg} for avg in avgs
                 ], value="avg_height"
             ),
-		], style={"width": "33%", "display": "inline-block"}),
+        ], style={"width": "33%", "display": "inline-block"}),
     ]),
     html.Div([
         dcc.Graph(
@@ -143,7 +143,9 @@ def update_avg_chart(league, role, avg):
             "x": filtered_df["season"],
             "y": filtered_df[avg],
             "type": "lines",
-        }], "layout": {"title": f"Average {role} player {avg[4:]} for {league}"}
+        }], "layout": {
+                "title": f"Average {role} player {avg[4:]} for {league}"
+            }
     }
 
     return avg_chart_figure
@@ -154,7 +156,7 @@ def render_dashboard():
     return redirect("/dashboard")
 
 
-########################## Github Webhook ##########################
+# -------------------------- Github Webhook --------------------------
 
 @server.route("/update_server", methods=["POST"])
 def webhook():
@@ -185,7 +187,8 @@ def webhook():
         return "Wrong event type!", 400
 
 
-def is_valid_signature(x_hub_signature, data, private_key=os.getenv("SECRET_KEY")):
+def is_valid_signature(
+        x_hub_signature, data, private_key=os.getenv("SECRET_KEY")):
     """Verify webhook signature.
 
     Args:

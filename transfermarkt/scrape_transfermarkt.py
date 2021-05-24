@@ -1,10 +1,5 @@
 import requests
-import pandas as pd
-import re
-import sys
-import json
 import logging
-import great_expectations as ge
 from bs4 import BeautifulSoup
 from collections import OrderedDict
 from config import Config
@@ -18,6 +13,9 @@ from transfermarkt.utils import (
     extract_nationality,
     extract_nation_flag_url,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 def get_table_soup(url):
@@ -74,7 +72,7 @@ def get_season_urls(season):
 
 
 def get_teams_urls(league_url):
-    """Given a league url for transfermarkt, it returns urls for all the teams 
+    """Given a league url for transfermarkt, it returns urls for all the teams
     partecipating to that league in the specified season.
 
     Args:
@@ -141,8 +139,14 @@ def get_players_data(team_info):
                 ("market_value", convert_market_value(player_info[9])),
                 ("nationality", extract_nationality(row)),
                 ("nation_flag_url", extract_nation_flag_url(row)),
-                ("player_transfermarkt_id", int(row.find("a", {"class": "spielprofil_tooltip"})["id"])),
-                ("player_picture_url", row.find("img", {"class": "bilderrahmen-fixed"})["src"]),
+                (
+                    "player_transfermarkt_id",
+                    int(row.find("a", {"class": "spielprofil_tooltip"})["id"])
+                ),
+                (
+                    "player_picture_url",
+                    row.find("img", {"class": "bilderrahmen-fixed"})["src"]
+                ),
                 ("updated_on", datetime.today().strftime("%Y-%m-%d")),
                 ("season", int(team_url.split("/")[-3])),
             ])
@@ -150,6 +154,9 @@ def get_players_data(team_info):
         except IndexError:
             team = team_url.split("/")[3]
             season = team_url.split("/")[-3]
-            logger.error(f"Error encountered for {player_info} in team {team}, season {season}")
+            logger.error(
+                f"Error encountered for {player_info}"
+                f" in team {team}, season {season}"
+            )
 
     return players

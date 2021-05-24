@@ -6,8 +6,12 @@ from prefect import Flow, task, unmapped, flatten
 from prefect.engine import signals
 from prefect.run_configs import LocalRun
 from prefect.tasks.database import SQLiteScript
-from transfermarkt.scrape_transfermarkt import get_season_urls, get_teams_urls, get_players_data
-from transfermarkt.db_utils import read_query_file, create_insert_query, sql_quote
+from transfermarkt.scrape_transfermarkt import (
+    get_season_urls, get_teams_urls, get_players_data
+)
+from transfermarkt.db_utils import (
+    read_query_file, create_insert_query
+)
 
 
 logger = logging.getLogger(__name__)
@@ -46,7 +50,7 @@ def get_staging_query(team_data, season):
 
 
 stage_team_players = SQLiteScript(
-	name="Insert Team to staging table",
+    name="Insert Team to staging table",
     db=Config.db_filename,
     tags=["db"],
 )
@@ -75,7 +79,7 @@ def validate_data(season):
         'datasource': datasource_name,
     }
 
-	# Configuring a Checkpoint to validate the batch
+    # Configuring a Checkpoint to validate the batch
     my_checkpoint = ge.checkpoint.LegacyCheckpoint(
         name="my_checkpoint",
         data_context=context,
@@ -104,7 +108,7 @@ def get_insert_to_raw_query(season):
     Returns:
         A string with the formatted query.
     """
-    
+
     query = """
     INSERT INTO players_raw
     SELECT * FROM players_{season}_staging
@@ -114,7 +118,7 @@ def get_insert_to_raw_query(season):
 
 
 add_players_to_raw_table = SQLiteScript(
-	name="Add players to raw data table",
+    name="Add players to raw data table",
     db=Config.db_filename,
     tags=["db"],
 )
@@ -130,7 +134,7 @@ def get_db_schema_query(schema, season):
 
 
 add_players_to_star_schema = SQLiteScript(
-	name="Add players to star schema tables",
+    name="Add players to star schema tables",
     db=Config.db_filename,
     tags=["db"],
 )
@@ -146,8 +150,8 @@ def get_drop_staging_query(season):
     Returns:
         A string with the formatted query.
     """
-    
-    query="""
+
+    query = """
     DROP TABLE IF EXISTS players_{season}_staging
     """.format(season=season)
 
@@ -193,7 +197,7 @@ def get_season(league_urls, season):
 
     with Flow("scrape transfermarkt season", run_config=LocalRun()) as flow:
         team_urls = get_teams.map(league_urls)
-        
+
         team_players = get_players.map(
             flatten(team_urls),
         )
@@ -204,7 +208,7 @@ def get_season(league_urls, season):
         )
 
         db = create_db(
-            script = db_schema,
+            script=db_schema,
         )
 
         queries = get_staging_query.map(team_players, unmapped(season))
@@ -238,7 +242,7 @@ def get_season(league_urls, season):
 
         drop_staging_query = get_drop_staging_query(season)
 
-        drop_staging = drop_staging_table(
+        drop_staging = drop_staging_table(  # noqa: F841
             script=drop_staging_query,
             upstream_tasks=[insert_to_schema],
         )
@@ -247,7 +251,7 @@ def get_season(league_urls, season):
             Config.data_aggregation_schema
         )
 
-        dashboard = aggregate_data(
+        dashboard = aggregate_data(  # noqa: F841
             script=dashboard_query,
             upstream_tasks=[insert_to_schema],
         )
@@ -267,8 +271,8 @@ def main():
     league_urls = get_season_urls(season)
     flow = get_season(league_urls, season)
     flow.run()
-    #flow.register("transfermarkt")
-    #flow.visualize()
+    # flow.register("transfermarkt")
+    # flow.visualize()
 
 
 if __name__ == "__main__":

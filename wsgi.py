@@ -1,1 +1,1 @@
-from dashboard import server
+from dashboard import server  # noqa F401
