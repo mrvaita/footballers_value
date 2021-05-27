@@ -1,5 +1,5 @@
 #!/bin/bash
-if [ ! -f ./football_players.sqlite ]; then
+if [ ! -f /data/football_players.sqlite ]; then
     python3 populate_db.py
 fi
 
