@@ -99,27 +99,29 @@ class ScrapeTransfermarkt(unittest.TestCase):
              'https://www.transfermarkt.com/ligue-1/startseite/wettbewerb/FR1/plus/?saison_id=1970']
 
     def test_get_teams_urls(self):
-        assert get_teams_urls('https://www.transfermarkt.com/serie-a/startseite/wettbewerb/IT1/plus/?saison_id=2020') == \
-            [('https://www.transfermarkt.com/inter-mailand/kader/verein/46/saison_id/2020/plus/1', 'serie-a'),
-             ('https://www.transfermarkt.com/ac-mailand/kader/verein/5/saison_id/2020/plus/1', 'serie-a'),
-             ('https://www.transfermarkt.com/atalanta-bergamo/kader/verein/800/saison_id/2020/plus/1', 'serie-a'),
-             ('https://www.transfermarkt.com/us-sassuolo/kader/verein/6574/saison_id/2020/plus/1', 'serie-a'),
-             ('https://www.transfermarkt.com/cagliari-calcio/kader/verein/1390/saison_id/2020/plus/1', 'serie-a'),
-             ('https://www.transfermarkt.com/hellas-verona/kader/verein/276/saison_id/2020/plus/1', 'serie-a'),
-             ('https://www.transfermarkt.com/fc-bologna/kader/verein/1025/saison_id/2020/plus/1', 'serie-a'),
-             ('https://www.transfermarkt.com/sampdoria-genua/kader/verein/1038/saison_id/2020/plus/1', 'serie-a'),
-             ('https://www.transfermarkt.com/spezia-calcio/kader/verein/3522/saison_id/2020/plus/1', 'serie-a'),
-             ('https://www.transfermarkt.com/fc-crotone/kader/verein/4083/saison_id/2020/plus/1', 'serie-a'),
-             ('https://www.transfermarkt.com/juventus-turin/kader/verein/506/saison_id/2020/plus/1', 'serie-a'),
-             ('https://www.transfermarkt.com/ssc-neapel/kader/verein/6195/saison_id/2020/plus/1', 'serie-a'),
-             ('https://www.transfermarkt.com/as-rom/kader/verein/12/saison_id/2020/plus/1', 'serie-a'),
-             ('https://www.transfermarkt.com/lazio-rom/kader/verein/398/saison_id/2020/plus/1', 'serie-a'),
-             ('https://www.transfermarkt.com/ac-florenz/kader/verein/430/saison_id/2020/plus/1', 'serie-a'),
-             ('https://www.transfermarkt.com/fc-turin/kader/verein/416/saison_id/2020/plus/1', 'serie-a'),
-             ('https://www.transfermarkt.com/udinese-calcio/kader/verein/410/saison_id/2020/plus/1', 'serie-a'),
-             ('https://www.transfermarkt.com/parma-calcio-1913/kader/verein/130/saison_id/2020/plus/1', 'serie-a'),
-             ('https://www.transfermarkt.com/genua-cfc/kader/verein/252/saison_id/2020/plus/1', 'serie-a'),
-             ('https://www.transfermarkt.com/benevento-calcio/kader/verein/4171/saison_id/2020/plus/1', 'serie-a')]
+        assert sorted(get_teams_urls('https://www.transfermarkt.com/serie-a/startseite/wettbewerb/IT1/plus/?saison_id=2020')) == \
+            sorted([
+                ('https://www.transfermarkt.com/inter-mailand/kader/verein/46/saison_id/2020/plus/1', 'serie-a'),
+                ('https://www.transfermarkt.com/ac-mailand/kader/verein/5/saison_id/2020/plus/1', 'serie-a'),
+                ('https://www.transfermarkt.com/atalanta-bergamo/kader/verein/800/saison_id/2020/plus/1', 'serie-a'),
+                ('https://www.transfermarkt.com/us-sassuolo/kader/verein/6574/saison_id/2020/plus/1', 'serie-a'),
+                ('https://www.transfermarkt.com/cagliari-calcio/kader/verein/1390/saison_id/2020/plus/1', 'serie-a'),
+                ('https://www.transfermarkt.com/hellas-verona/kader/verein/276/saison_id/2020/plus/1', 'serie-a'),
+                ('https://www.transfermarkt.com/fc-bologna/kader/verein/1025/saison_id/2020/plus/1', 'serie-a'),
+                ('https://www.transfermarkt.com/sampdoria-genua/kader/verein/1038/saison_id/2020/plus/1', 'serie-a'),
+                ('https://www.transfermarkt.com/spezia-calcio/kader/verein/3522/saison_id/2020/plus/1', 'serie-a'),
+                ('https://www.transfermarkt.com/fc-crotone/kader/verein/4083/saison_id/2020/plus/1', 'serie-a'),
+                ('https://www.transfermarkt.com/juventus-turin/kader/verein/506/saison_id/2020/plus/1', 'serie-a'),
+                ('https://www.transfermarkt.com/ssc-neapel/kader/verein/6195/saison_id/2020/plus/1', 'serie-a'),
+                ('https://www.transfermarkt.com/as-rom/kader/verein/12/saison_id/2020/plus/1', 'serie-a'),
+                ('https://www.transfermarkt.com/lazio-rom/kader/verein/398/saison_id/2020/plus/1', 'serie-a'),
+                ('https://www.transfermarkt.com/ac-florenz/kader/verein/430/saison_id/2020/plus/1', 'serie-a'),
+                ('https://www.transfermarkt.com/fc-turin/kader/verein/416/saison_id/2020/plus/1', 'serie-a'),
+                ('https://www.transfermarkt.com/udinese-calcio/kader/verein/410/saison_id/2020/plus/1', 'serie-a'),
+                ('https://www.transfermarkt.com/parma-calcio-1913/kader/verein/130/saison_id/2020/plus/1', 'serie-a'),
+                ('https://www.transfermarkt.com/genua-cfc/kader/verein/252/saison_id/2020/plus/1', 'serie-a'),
+                ('https://www.transfermarkt.com/benevento-calcio/kader/verein/4171/saison_id/2020/plus/1', 'serie-a')]
+            )
 
     def test_get_players_data(self):
         handa = get_players_data(('https://www.transfermarkt.com/inter-mailand/kader/verein/46/saison_id/2020/plus/1', 'serie-a'))[0]
