@@ -66,13 +66,12 @@ You can now navigate with your web browser to http://localhost:8000.
 ```
 git clone https://github.com/mrvaita/footballers_value
 cd footballers_value
-echo "DATABASE_URL=sqlite:////<yourpathto>/football_players.sqlite" > .env
 docker build -t tmarkt .
-docker run --name footballers -p 8000:5000 --rm tmarkt:latest
+docker run --name footballers -v "$(pwd)":/data -p 8000:5000 --rm test:latest
 ```
 Note that when you run the docker container the database will be automatically
-populated and the database update script will be executed to pull new data
-every year.
+populated (database can be populated upfront following the instructions above)
+and the database update script will be executed to pull new data every year.
 You can add the flag `-d` to the docker run command to execute the container in
 the background.
 In case you are using a Raspberry Pi, please build the docker image using the

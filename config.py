@@ -38,7 +38,7 @@ class Config:
     if os.environ.get("DATABASE_URL") is None:
         raise OSError("DATABASE_URL enviroment variable not set")
     else:
-        db_filename = os.environ.get("DATABASE_URL").split("/")[-1]
+        db_filename = os.environ.get("DATABASE_URL")[10:]
 
     raw_db_schema = "queries/db_schema.sql"
     db_star_schema = "queries/star_schema.sql"

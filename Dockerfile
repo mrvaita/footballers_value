@@ -16,11 +16,14 @@ RUN python3 -m pip install -U pip && \
     python3 -m pip install -r requirements.txt && \
     python3 -m pip install gunicorn
 
-# Limit this copy exclusively to the necessary directories
-COPY . /footballers_value
+COPY great_expectations great_expectations
+COPY queries queries
+COPY transfermarkt transfermarkt
+COPY collect_season.py config.py dashboard.py populate_db.py run_cron.py wsgi.py boot.sh ./
 RUN chmod +x boot.sh
 
 ENV FLASK_APP wsgi.py
+ENV DATABASE_URL sqlite:////data/football_players.sqlite
 
 RUN adduser --disabled-password footballers_value
 RUN chown -R footballers_value:footballers_value ./
