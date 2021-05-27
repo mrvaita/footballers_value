@@ -54,7 +54,7 @@ pip install -r requirements.txt
 ```
 - populate database (I will take some time)
 ```
-export DATABASE_URL=sqlite:////path/to/football_players.sqlite
+export DATABASE_URL=sqlite:////<yourpathto>/football_players.sqlite
 python populate_db.py
 ```
 - run the application
@@ -66,6 +66,7 @@ You can now navigate with your web browser to http://localhost:8000.
 ```
 git clone https://github.com/mrvaita/footballers_value
 cd footballers_value
+echo "DATABASE_URL=sqlite:////<yourpathto>/football_players.sqlite" > .env
 docker build -t tmarkt .
 docker run --name footballers -p 8000:5000 --rm tmarkt:latest
 ```
