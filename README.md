@@ -67,7 +67,7 @@ You can now navigate with your web browser to http://localhost:8000.
 git clone https://github.com/mrvaita/footballers_value
 cd footballers_value
 docker build -t tmarkt .
-docker run --name footballers -v "$(pwd)":/data -p 8000:5000 --rm test:latest
+docker run --name footballers -v "$(pwd)":/data -p 8000:5000 --rm tmarkt:latest
 ```
 Note that when you run the docker container the database will be automatically
 populated (database can be populated upfront following the instructions above)
