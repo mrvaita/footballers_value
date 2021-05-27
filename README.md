@@ -9,13 +9,13 @@ The data is than used to build data analysis and visualisation tools.
 - Write a data aggregation framework to perform data analysis (e.g., Average cost of players in each league, Player’s nationality frequency, etc.)
 - Build web application to visualize aggregated results as interactive dashboard
 - Application deployment on Docker container
-- CI/CD: Github actions and webhook to test PRs and deploy on server
+- CI/CD: Github actions and webhook to test PRs and deploy on remote server
 ### Tools:
 - Python [requests](https://docs.python-requests.org/en/master/) and [Beautifulsoup](https://www.crummy.com/software/BeautifulSoup/) to collect the data and SQLite to store them
 - Data acquisition pipeline is automatized with [Prefect](https://www.prefect.io/)
 - Data validatation is ensured by [Great Expectations](https://greatexpectations.io/)
-- Flask to build the web application to enable the Webhook
-- Dash to build the dashboard
+- [Flask](https://flask.palletsprojects.com/en/2.0.x/) to build the web application to enable the Webhook
+- [Dash](https://dash.plotly.com/) to build the dashboard
 ### Data:
 Raw data will be stored in a single table including the following information
 | players_raw             | description                     |
@@ -61,7 +61,7 @@ python populate_db.py
 ```
 gunicorn --bind 0.0.0.0:8000 wsgi:server
 ```
-You can now navigate with your web browser to http://localhost:8000
+You can now navigate with your web browser to http://localhost:8000.
 #### Using Docker
 ```
 git clone https://github.com/mrvaita/footballers_value
@@ -77,8 +77,8 @@ the background.
 In case you are using a Raspberry Pi, please build the docker image using the
 command `docker build -t tmarkt -f DockerfilePi .`. This specific dockerfile
 will use [PiWheels](https://www.piwheels.org/) to install the dependencies.
-If the installation is successfull you can visit the dashboard
+If the installation is successfull you can visit the dashboard at
 http://localhost:8000.
 
 ### Architecture
-You can see more details about the project in the included [pdf]().
+You can see more details about the project in the included [pdf](https://github.com/mrvaita/footballers_value/blob/michele/resources/presentation.pdf).
